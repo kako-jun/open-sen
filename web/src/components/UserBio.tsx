@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-
-const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:8787';
+import { API_BASE } from '../utils/api';
 
 interface UserBioProps {
   userId: string;

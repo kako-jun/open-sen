@@ -1,12 +1,5 @@
 import { useState } from 'react';
-
-const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:8787';
-
-// Get JWT from cookie
-function getAuthToken(): string | null {
-  const match = document.cookie.match(/CF_Authorization=([^;]+)/);
-  return match ? match[1] : null;
-}
+import { API_BASE, getAuthToken } from '../utils/api';
 
 export default function ProjectForm() {
   const [name, setName] = useState('');

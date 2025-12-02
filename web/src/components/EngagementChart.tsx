@@ -6,111 +6,14 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
 } from 'recharts';
-
-const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:8787';
-
-interface Project {
-  id: number;
-  name: string;
-  owner_id: string;
-  github_url: string | null;
-  posts: Post[];
-}
-
-interface Post {
-  id: number;
-  platform: string;
-  url: string;
-  posted_at: string;
-}
-
-interface GithubStat {
-  date: string;
-  stars: number;
-  forks: number;
-  issues: number;
-}
-
-interface PostEngagement {
-  platform: string;
-  url: string;
-  date: string;
-  likes: number;
-  comments: number;
-  shares: number;
-}
-
-interface EngagementData {
-  github: GithubStat[];
-  posts: PostEngagement[];
-}
-
-
-// GitHub-like icons using Font Awesome
-const StarIcon = () => (
-  <i className="fa-solid fa-star" style={{ fontSize: '12px', color: '#e3b341' }}></i>
-);
-
-const ForkIcon = () => (
-  <i className="fa-solid fa-code-fork" style={{ fontSize: '12px', color: 'var(--text-secondary)' }}></i>
-);
-
-// グラフの色を傾向で決定（上昇:緑、下降:青、横ばい:グレー）
-function getTrendColor(data: number[]): string {
-  if (!data || data.length < 2) return 'var(--text-muted)';
-  const first = data[0];
-  const last = data[data.length - 1];
-  const diff = last - first;
-  const threshold = Math.max(first * 0.05, 1); // 5%以上の変化で傾向判定
-  if (diff > threshold) return '#22c55e'; // 上昇 - 緑
-  if (diff < -threshold) return '#3b82f6'; // 下降 - 青
-  return '#8b949e'; // 横ばい - グレー
-}
-
-// Mini sparkline chart (SVG) - same as ProductGrid
-function MiniChart({ data, color }: { data: number[]; color?: string }) {
-  if (!data || data.length < 2) return null;
-
-  const chartColor = color || getTrendColor(data);
-  const width = 60;
-  const height = 20;
-  const max = Math.max(...data, 1);
-  const min = Math.min(...data, 0);
-  const range = max - min || 1;
-
-  const points = data.map((v, i) => {
-    const x = (i / (data.length - 1)) * width;
-    const y = height - ((v - min) / range) * height;
-    return `${x},${y}`;
-  }).join(' ');
-
-  return (
-    <svg width={width} height={height} style={{ display: 'block', flexShrink: 0 }}>
-      <polyline
-        points={points}
-        fill="none"
-        stroke={chartColor}
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-// URL短縮表示
-const shortenUrl = (url: string) => {
-  try {
-    const u = new URL(url);
-    const path = u.pathname.length > 30 ? u.pathname.substring(0, 30) + '…' : u.pathname;
-    return u.hostname + path;
-  } catch {
-    return url.length > 40 ? url.substring(0, 40) + '…' : url;
-  }
-};
+import type { Project, EngagementData } from '../types';
+import { API_BASE } from '../utils/api';
+import { getPlatformConfig } from '../utils/platformConfig';
+import { shortenOwnerId, shortenUrl } from '../utils/stringUtils';
+import PlatformBadge from './PlatformBadge';
+import { StarsBadge, ForksBadge, LikesBadge, CommentsBadge, SharesBadge } from './StatBadge';
 
 export default function EngagementChart({ projectId }: { projectId: string }) {
   const [project, setProject] = useState<Project | null>(null);
@@ -157,7 +60,7 @@ export default function EngagementChart({ projectId }: { projectId: string }) {
             href={`/users/${project.owner_id}`}
             style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontWeight: 500 }}
           >
-            {project.owner_id.substring(0, 8)}
+            {shortenOwnerId(project.owner_id)}
           </a>
           <span style={{ color: 'var(--text-muted)' }}>/</span>
           <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>
@@ -181,14 +84,8 @@ export default function EngagementChart({ projectId }: { projectId: string }) {
             </a>
             {latestGithub && (
               <div style={{ display: 'flex', gap: '12px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '12px' }}>
-                  <StarIcon />
-                  <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{latestGithub.stars}</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '12px' }}>
-                  <ForkIcon />
-                  <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{latestGithub.forks}</span>
-                </div>
+                <StarsBadge value={latestGithub.stars} />
+                <ForksBadge value={latestGithub.forks} />
               </div>
             )}
           </div>
@@ -240,8 +137,12 @@ export default function EngagementChart({ projectId }: { projectId: string }) {
         </span>
       </div>
 
-      {/* Post Cards */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      {/* Post Cards - Grid layout */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+        gap: '8px',
+      }}>
         {project.posts && project.posts.length > 0 ? (
           project.posts.map((post) => {
             // 該当投稿の最新エンゲージメントを取得
@@ -274,19 +175,7 @@ export default function EngagementChart({ projectId }: { projectId: string }) {
                   onMouseEnter={(e) => e.currentTarget.style.background = 'var(--glass-bg)'}
                   onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                 >
-                  <span style={{
-                    background: getPlatformConfig(post.platform).color,
-                    color: 'white',
-                    width: '22px',
-                    height: '22px',
-                    borderRadius: '4px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                  }}>
-                    <i className={getPlatformConfig(post.platform).icon} style={{ fontSize: '12px' }}></i>
-                  </span>
+                  <PlatformBadge platform={post.platform} size="medium" />
                   <span style={{
                     color: 'var(--link-color)',
                     fontSize: '12px',
@@ -299,24 +188,9 @@ export default function EngagementChart({ projectId }: { projectId: string }) {
                   </span>
                   {latestEngagement && (
                     <div style={{ display: 'flex', gap: '10px', flexShrink: 0 }}>
-                      {latestEngagement.likes > 0 && (
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '11px', color: 'var(--text-secondary)' }}>
-                          <i className="fa-solid fa-heart" style={{ color: '#f43f5e', fontSize: '10px' }}></i>
-                          {latestEngagement.likes}
-                        </span>
-                      )}
-                      {latestEngagement.comments > 0 && (
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '11px', color: 'var(--text-secondary)' }}>
-                          <i className="fa-solid fa-comment" style={{ fontSize: '10px' }}></i>
-                          {latestEngagement.comments}
-                        </span>
-                      )}
-                      {latestEngagement.shares > 0 && (
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '11px', color: 'var(--text-secondary)' }}>
-                          <i className="fa-solid fa-share" style={{ fontSize: '10px' }}></i>
-                          {latestEngagement.shares}
-                        </span>
-                      )}
+                      <LikesBadge value={latestEngagement.likes} />
+                      <CommentsBadge value={latestEngagement.comments} />
+                      <SharesBadge value={latestEngagement.shares} />
                     </div>
                   )}
                   <span style={{ color: 'var(--text-muted)', fontSize: '10px', flexShrink: 0 }}>
@@ -359,23 +233,4 @@ export default function EngagementChart({ projectId }: { projectId: string }) {
       </div>
     </div>
   );
-}
-
-// Platform config (color + Font Awesome icon class)
-const platformConfig: Record<string, { color: string; icon: string }> = {
-  zenn: { color: '#3ea8ff', icon: 'fa-solid fa-z' },
-  qiita: { color: '#55c500', icon: 'fa-solid fa-q' },
-  reddit: { color: '#ff4500', icon: 'fa-brands fa-reddit-alien' },
-  github: { color: '#333333', icon: 'fa-brands fa-github' },
-  note: { color: '#41c9b4', icon: 'fa-solid fa-n' },
-  x: { color: '#000000', icon: 'fa-brands fa-x-twitter' },
-  instagram: { color: '#e4405f', icon: 'fa-brands fa-instagram' },
-  youtube: { color: '#ff0000', icon: 'fa-brands fa-youtube' },
-  tiktok: { color: '#000000', icon: 'fa-brands fa-tiktok' },
-  facebook: { color: '#1877f2', icon: 'fa-brands fa-facebook' },
-  threads: { color: '#000000', icon: 'fa-brands fa-threads' },
-};
-
-function getPlatformConfig(platform: string) {
-  return platformConfig[platform] || { color: '#6e7681', icon: 'fa-solid fa-link' };
 }

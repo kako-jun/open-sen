@@ -1,14 +1,7 @@
 import { useState, useEffect } from 'react';
-
-const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:8787';
-
-interface Project {
-  id: number;
-  name: string;
-  github_url: string | null;
-  owner_id: string;
-  created_at: string;
-}
+import type { Project } from '../types';
+import { API_BASE } from '../utils/api';
+import { shortenOwnerId } from '../utils/stringUtils';
 
 // GitHub-like repo icon
 const RepoIcon = () => (
@@ -74,9 +67,6 @@ export default function ProjectList({ isLoggedIn = false, showAll = false, owner
       </div>
     );
   }
-
-  // owner_idを短縮表示（最初の8文字）
-  const shortenOwnerId = (id: string) => id.substring(0, 8);
 
   return (
     <div className="card" style={{ padding: 0, overflow: 'hidden' }}>

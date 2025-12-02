@@ -1,40 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-
-const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:8787';
-
-interface Post {
-  id: number;
-  platform: string;
-  url: string;
-  posted_at: string;
-}
-
-interface GithubStat {
-  date: string;
-  stars: number;
-  forks: number;
-}
-
-interface PostEngagement {
-  platform: string;
-  url: string;
-  date: string;
-  likes: number;
-  comments: number;
-  shares: number;
-}
-
-interface Project {
-  id: number;
-  name: string;
-  description: string | null;
-  github_url: string | null;
-  owner_id: string;
-  created_at: string;
-  posts?: Post[];
-  github?: GithubStat[];
-  postEngagements?: PostEngagement[];
-}
+import type { Project, PostEngagement } from '../types';
+import { API_BASE } from '../utils/api';
+import { getPlatformConfig } from '../utils/platformConfig';
+import { shortenOwnerId, shortenUrl } from '../utils/stringUtils';
+import MiniChart from './MiniChart';
+import PlatformBadge from './PlatformBadge';
 
 interface ProductGridProps {
   ownerId?: string;
@@ -43,75 +13,6 @@ interface ProductGridProps {
 }
 
 const ITEMS_PER_PAGE = 12;
-
-// Platform config (color + Font Awesome icon class)
-const platformConfig: Record<string, { color: string; icon: string }> = {
-  zenn: { color: '#3ea8ff', icon: 'fa-solid fa-z' },
-  qiita: { color: '#55c500', icon: 'fa-solid fa-q' },
-  reddit: { color: '#ff4500', icon: 'fa-brands fa-reddit-alien' },
-  github: { color: '#333333', icon: 'fa-brands fa-github' },
-  note: { color: '#41c9b4', icon: 'fa-solid fa-n' },
-  x: { color: '#000000', icon: 'fa-brands fa-x-twitter' },
-  instagram: { color: '#e4405f', icon: 'fa-brands fa-instagram' },
-  youtube: { color: '#ff0000', icon: 'fa-brands fa-youtube' },
-  tiktok: { color: '#000000', icon: 'fa-brands fa-tiktok' },
-  facebook: { color: '#1877f2', icon: 'fa-brands fa-facebook' },
-  threads: { color: '#000000', icon: 'fa-brands fa-threads' },
-};
-
-const getPlatformConfig = (platform: string) => platformConfig[platform] || { color: '#6e7681', icon: 'fa-solid fa-link' };
-const shortenOwnerId = (id: string) => id.substring(0, 8);
-const shortenUrl = (url: string) => {
-  try {
-    const u = new URL(url);
-    return u.hostname + u.pathname.substring(0, 15) + (u.pathname.length > 15 ? '…' : '');
-  } catch {
-    return url.substring(0, 25) + '…';
-  }
-};
-
-// グラフの色を傾向で決定（上昇:緑、下降:青、横ばい:グレー）
-function getTrendColor(data: number[]): string {
-  if (!data || data.length < 2) return 'var(--text-muted)';
-  const first = data[0];
-  const last = data[data.length - 1];
-  const diff = last - first;
-  const threshold = Math.max(first * 0.05, 1); // 5%以上の変化で傾向判定
-  if (diff > threshold) return '#22c55e'; // 上昇 - 緑
-  if (diff < -threshold) return '#3b82f6'; // 下降 - 青
-  return '#8b949e'; // 横ばい - グレー
-}
-
-// Mini sparkline chart (SVG)
-function MiniChart({ data, color }: { data: number[]; color?: string }) {
-  if (!data || data.length < 2) return null;
-
-  const chartColor = color || getTrendColor(data);
-  const width = 50;
-  const height = 16;
-  const max = Math.max(...data, 1);
-  const min = Math.min(...data, 0);
-  const range = max - min || 1;
-
-  const points = data.map((v, i) => {
-    const x = (i / (data.length - 1)) * width;
-    const y = height - ((v - min) / range) * height;
-    return `${x},${y}`;
-  }).join(' ');
-
-  return (
-    <svg width={width} height={height} style={{ display: 'block', flexShrink: 0 }}>
-      <polyline
-        points={points}
-        fill="none"
-        stroke={chartColor}
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
 
 export default function ProductGrid({ ownerId, limit, infiniteScroll = false }: ProductGridProps) {
   const [allProjects, setAllProjects] = useState<Project[]>([]);
@@ -251,13 +152,13 @@ export default function ProductGrid({ ownerId, limit, infiniteScroll = false }: 
 
   // 投稿のエンゲージメント履歴からミニグラフ用データを取得
   const getPostEngagementHistory = (project: Project, postUrl: string) => {
-    const engagements = project.postEngagements?.filter(e => e.url === postUrl) || [];
-    return engagements.map(e => e.likes + e.comments);
+    const engagements = project.postEngagements?.filter((e: PostEngagement) => e.url === postUrl) || [];
+    return engagements.map((e: PostEngagement) => e.likes + e.comments);
   };
 
   // 投稿の最新エンゲージメントを取得
   const getLatestEngagement = (project: Project, postUrl: string) => {
-    const engagements = project.postEngagements?.filter(e => e.url === postUrl) || [];
+    const engagements = project.postEngagements?.filter((e: PostEngagement) => e.url === postUrl) || [];
     return engagements[engagements.length - 1];
   };
 
@@ -345,19 +246,7 @@ export default function ProductGrid({ ownerId, limit, infiniteScroll = false }: 
                   fontSize: '10px',
                 }}
               >
-                <span style={{
-                  background: '#333333',
-                  color: 'white',
-                  width: '18px',
-                  height: '18px',
-                  borderRadius: '4px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                }}>
-                  <i className="fa-brands fa-github" style={{ fontSize: '10px' }}></i>
-                </span>
+                <PlatformBadge platform="github" size="small" />
                 <span style={{ color: 'var(--text-secondary)', flex: 1 }}>
                   {project.github_url.replace('https://github.com/', '')}
                 </span>
@@ -397,19 +286,7 @@ export default function ProductGrid({ ownerId, limit, infiniteScroll = false }: 
                         fontSize: '10px',
                       }}
                     >
-                      <span style={{
-                        background: getPlatformConfig(post.platform).color,
-                        color: 'white',
-                        width: '18px',
-                        height: '18px',
-                        borderRadius: '4px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0,
-                      }}>
-                        <i className={getPlatformConfig(post.platform).icon} style={{ fontSize: '10px' }}></i>
-                      </span>
+                      <PlatformBadge platform={post.platform} size="small" />
                       <span style={{
                         color: 'var(--text-secondary)',
                         overflow: 'hidden',
@@ -457,9 +334,12 @@ export default function ProductGrid({ ownerId, limit, infiniteScroll = false }: 
             </span>
           )}
           {!hasMore && allProjects.length > 0 && (
-            <span style={{ color: 'var(--text-muted)', fontSize: '11px' }}>
-              すべてのプロジェクトを表示しました
-            </span>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+              <i className="fa-solid fa-circle-check" style={{ fontSize: '24px', color: 'var(--accent-primary)' }}></i>
+              <span style={{ color: 'var(--text-muted)', fontSize: '11px' }}>
+                すべてのプロジェクトを表示しました
+              </span>
+            </div>
           )}
         </div>
       )}
