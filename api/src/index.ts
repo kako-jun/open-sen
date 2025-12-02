@@ -6,32 +6,79 @@ type Bindings = {
   DB: D1Database
 }
 
-const app = new Hono<{ Bindings: Bindings }>()
+type Variables = {
+  userId: string | null
+}
+
+const app = new Hono<{ Bindings: Bindings; Variables: Variables }>()
 
 // CORS設定
 app.use('/*', cors())
+
+// Cloudflare Access認証ミドルウェア
+// Cf-Access-Jwt-Assertionヘッダーからユーザー情報を取得
+app.use('/*', async (c, next) => {
+  const cfAccessJwt = c.req.header('Cf-Access-Jwt-Assertion')
+
+  if (cfAccessJwt) {
+    try {
+      // JWTをデコード（Cloudflare Accessが検証済みなので署名検証は不要）
+      const parts = cfAccessJwt.split('.')
+      if (parts.length === 3) {
+        const payload = JSON.parse(atob(parts[1]))
+        // subがユーザーの一意識別子（ハッシュ済み）
+        c.set('userId', payload.sub || null)
+      }
+    } catch {
+      c.set('userId', null)
+    }
+  } else {
+    c.set('userId', null)
+  }
+
+  await next()
+})
+
+// 認証必須のエンドポイント用ミドルウェア
+const requireAuth = async (c: any, next: any) => {
+  const userId = c.get('userId')
+  if (!userId) {
+    return c.json({ error: 'Unauthorized' }, 401)
+  }
+  await next()
+}
 
 // ヘルスチェック
 app.get('/', (c) => {
   return c.json({ status: 'ok', name: 'open-sen' })
 })
 
-// プロジェクト一覧
-app.get('/api/projects', async (c) => {
+// 自分のプロジェクト一覧（認証必須）
+app.get('/api/projects', requireAuth, async (c) => {
+  const userId = c.get('userId')
+
   const { results } = await c.env.DB.prepare(
-    'SELECT * FROM projects ORDER BY created_at DESC'
-  ).all()
+    'SELECT * FROM projects WHERE owner_id = ? ORDER BY created_at DESC'
+  ).bind(userId).all()
+
   return c.json(results)
 })
 
-// プロジェクト詳細
+// プロジェクト詳細（公開 or 自分のプロジェクト）
 app.get('/api/projects/:id', async (c) => {
   const id = c.req.param('id')
+  const userId = c.get('userId')
+
   const project = await c.env.DB.prepare(
     'SELECT * FROM projects WHERE id = ?'
-  ).bind(id).first()
+  ).bind(id).first() as any
 
   if (!project) {
+    return c.json({ error: 'Not found' }, 404)
+  }
+
+  // 公開プロジェクト or 自分のプロジェクトのみアクセス可
+  if (!project.is_public && project.owner_id !== userId) {
     return c.json({ error: 'Not found' }, 404)
   }
 
@@ -46,6 +93,20 @@ app.get('/api/projects/:id', async (c) => {
 // プロジェクトのエンゲージメント履歴
 app.get('/api/projects/:id/engagements', async (c) => {
   const id = c.req.param('id')
+  const userId = c.get('userId')
+
+  // プロジェクトの存在確認とアクセス権チェック
+  const project = await c.env.DB.prepare(
+    'SELECT * FROM projects WHERE id = ?'
+  ).bind(id).first() as any
+
+  if (!project) {
+    return c.json({ error: 'Not found' }, 404)
+  }
+
+  if (!project.is_public && project.owner_id !== userId) {
+    return c.json({ error: 'Not found' }, 404)
+  }
 
   // GitHub stats
   const { results: githubStats } = await c.env.DB.prepare(`
@@ -67,20 +128,32 @@ app.get('/api/projects/:id/engagements', async (c) => {
   return c.json({ github: githubStats, posts: postEngagements })
 })
 
-// プロジェクト追加（要認証）
-app.post('/api/projects', async (c) => {
+// プロジェクト追加（認証必須）
+app.post('/api/projects', requireAuth, async (c) => {
+  const userId = c.get('userId')
   const { name, github_url } = await c.req.json()
 
   const result = await c.env.DB.prepare(
-    'INSERT INTO projects (name, github_url) VALUES (?, ?)'
-  ).bind(name, github_url).run()
+    'INSERT INTO projects (owner_id, name, github_url) VALUES (?, ?, ?)'
+  ).bind(userId, name, github_url).run()
 
   return c.json({ id: result.meta.last_row_id, name, github_url }, 201)
 })
 
-// 投稿追加（要認証）
-app.post('/api/posts', async (c) => {
+// 投稿追加（認証必須 + プロジェクト所有者チェック）
+app.post('/api/posts', requireAuth, async (c) => {
+  const userId = c.get('userId')
   const { project_id, platform, url, posted_at } = await c.req.json()
+
+  // プロジェクトの所有者チェック
+  const project = await c.env.DB.prepare(
+    'SELECT owner_id FROM projects WHERE id = ?'
+  ).bind(project_id).first() as any
+
+  if (!project || project.owner_id !== userId) {
+    return c.json({ error: 'Forbidden' }, 403)
+  }
+
   const actualPostedAt = posted_at || new Date().toISOString()
 
   const result = await c.env.DB.prepare(
@@ -90,14 +163,49 @@ app.post('/api/posts', async (c) => {
   return c.json({ id: result.meta.last_row_id }, 201)
 })
 
-// 投稿削除（要認証）
-app.delete('/api/posts/:id', async (c) => {
+// 投稿削除（認証必須 + プロジェクト所有者チェック）
+app.delete('/api/posts/:id', requireAuth, async (c) => {
+  const userId = c.get('userId')
   const id = c.req.param('id')
+
+  // 投稿とプロジェクトの所有者チェック
+  const post = await c.env.DB.prepare(`
+    SELECT p.id, proj.owner_id
+    FROM posts p
+    JOIN projects proj ON p.project_id = proj.id
+    WHERE p.id = ?
+  `).bind(id).first() as any
+
+  if (!post || post.owner_id !== userId) {
+    return c.json({ error: 'Forbidden' }, 403)
+  }
 
   await c.env.DB.prepare('DELETE FROM engagements WHERE post_id = ?').bind(id).run()
   await c.env.DB.prepare('DELETE FROM posts WHERE id = ?').bind(id).run()
 
   return c.json({ success: true })
+})
+
+// プロジェクト公開設定の切り替え（認証必須）
+app.patch('/api/projects/:id/visibility', requireAuth, async (c) => {
+  const userId = c.get('userId')
+  const id = c.req.param('id')
+  const { is_public } = await c.req.json()
+
+  // プロジェクトの所有者チェック
+  const project = await c.env.DB.prepare(
+    'SELECT owner_id FROM projects WHERE id = ?'
+  ).bind(id).first() as any
+
+  if (!project || project.owner_id !== userId) {
+    return c.json({ error: 'Forbidden' }, 403)
+  }
+
+  await c.env.DB.prepare(
+    'UPDATE projects SET is_public = ? WHERE id = ?'
+  ).bind(is_public ? 1 : 0, id).run()
+
+  return c.json({ success: true, is_public: !!is_public })
 })
 
 // Cron: エンゲージメント取得（1日1回）

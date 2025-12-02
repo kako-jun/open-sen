@@ -37,26 +37,59 @@
 - 認証が必要なAPI（X/Twitter等）は手動入力で対応
 - できる限り認証なしで自動取得
 
-## コンセプト
+### プライバシー重視
 
-- 投稿先（Zenn, Qiita, Note, X, Reddit, Instagram, YouTube等）を登録
-- 1日1回エンゲージメント（いいね、コメント数など）を取得
-- 時系列グラフで推移を表示
-- URLを公開して「こんな感じです」と晒せる
+- 個人情報（メールアドレス、GitHubユーザー名等）は**保存しない**
+- `owner_id`はCloudflare Accessのsubject ID（ハッシュ済み）
+- アバターはGitHubから取得せず、パワプロ風キャラを自動生成
+- ユーザーは任意でアバターをカスタマイズ可能
+
+### ホスティング方針
+
+- **メイン**: https://open-sen.llll-ll.com でホスト
+- **セルフホスト**: おまけ（開発者向け）
+
+## 進捗状況
+
+### 完了 (v1)
+- [x] API基盤 (Hono + D1)
+- [x] Webフロントエンド (Astro + React)
+- [x] スクレイパー (GitHub, Zenn, Qiita, Note, Reddit)
+- [x] UI (GitHub風ダークテーマ + 野球励ましメッセージ)
+- [x] DBスキーマ (owner_id, is_public対応)
+- [x] 免責事項 (README + フッター)
+- [x] プラットフォーム対応 (開発者向け + 一般向け)
+
+### 残り (v1 - デプロイに必要)
+- [ ] Cloudflare Access認証ミドルウェア
+- [ ] APIにowner_idチェック追加
+- [ ] D1データベース作成 & マイグレーション
+- [ ] Workers/Pagesデプロイ設定
+
+### 将来 (v2)
+- [ ] パワプロ風アバター生成コンポーネント
+- [ ] アバターカスタマイズ機能
+- [ ] 手動エンゲージメント入力UI (X, Instagram等)
+- [ ] 公開ダッシュボード機能 (is_public)
+- [ ] 投稿削除UI
+- [ ] 通知機能（急にバズった時）
+- [ ] 埋め込みウィジェット
 
 ## 技術スタック
 
 ### バックエンド
-- **Cloudflare Workers**: API、データ取得
+- **Cloudflare Workers**: API (Hono)
 - **Cloudflare Cron Triggers**: 1日1回の定期実行
 - **Cloudflare D1**: SQLiteベースのDB
 
 ### フロントエンド
-- **Cloudflare Pages**: 静的サイトホスティング
-- React or Vue or Svelte（未定）
+- **Astro + React**: SSG + インタラクティブコンポーネント
+- **Recharts**: グラフ描画
+- **Cloudflare Pages**: ホスティング
 
 ### 認証
-- **Cloudflare Access**: GitHub認証（追加・編集用）
+- **Cloudflare Access**: GitHub認証
+- アバター等の追加権限は不要（ワンクリックログイン）
 
 ## データ取得方法
 
@@ -65,10 +98,10 @@
 | サービス | 方法 | 取得データ |
 |----------|------|-----------|
 | GitHub | 公式API | Star数、Fork数、Issue数 |
-| Zenn | 非公式API | いいね数、コメント数、ブックマーク数 |
-| Qiita | 公式API | いいね数、コメント数、ストック数 |
-| Note | 非公式API | スキ数、コメント数 |
-| Reddit | 公式JSON API | upvote数、コメント数 |
+| Zenn | 非公式API `/api/articles/{slug}` | いいね数、コメント数、ブックマーク数 |
+| Qiita | 公式API `/api/v2/items/{id}` | いいね数、コメント数、ストック数 |
+| Note | 非公式API `/api/v3/notes/{key}` | スキ数、コメント数 |
+| Reddit | 公式JSON `{url}.json` | upvote数、コメント数 |
 
 ### 手動入力（認証が必要なため）
 
@@ -83,70 +116,30 @@
 
 ## DB設計（D1）
 
-### projects テーブル
 ```sql
+-- projects: owner_id追加、is_public追加
 CREATE TABLE projects (
-  id INTEGER PRIMARY KEY,
-  name TEXT NOT NULL,           -- プロジェクト名（例: chunkundo.nvim）
-  github_url TEXT,              -- GitHubリポジトリURL
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  owner_id TEXT NOT NULL,       -- Cloudflare Access subject ID (ハッシュ済み)
+  name TEXT NOT NULL,
+  github_url TEXT,
+  is_public INTEGER DEFAULT 0,  -- 1 = 公開ダッシュボード
   created_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
-```
 
-### posts テーブル
-```sql
-CREATE TABLE posts (
-  id INTEGER PRIMARY KEY,
-  project_id INTEGER NOT NULL,
-  platform TEXT NOT NULL,       -- zenn, qiita, note, x, reddit
-  url TEXT NOT NULL,            -- 投稿URL
-  posted_at TEXT,               -- 投稿日時
-  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (project_id) REFERENCES projects(id)
-);
-```
-
-### engagements テーブル
-```sql
-CREATE TABLE engagements (
-  id INTEGER PRIMARY KEY,
-  post_id INTEGER NOT NULL,
-  date TEXT NOT NULL,           -- 取得日（YYYY-MM-DD）
-  likes INTEGER DEFAULT 0,
-  comments INTEGER DEFAULT 0,
-  shares INTEGER DEFAULT 0,     -- RT, ストックなど
-  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (post_id) REFERENCES posts(id),
-  UNIQUE(post_id, date)
-);
-```
-
-### github_stats テーブル
-```sql
-CREATE TABLE github_stats (
-  id INTEGER PRIMARY KEY,
-  project_id INTEGER NOT NULL,
-  date TEXT NOT NULL,
-  stars INTEGER DEFAULT 0,
-  forks INTEGER DEFAULT 0,
-  issues INTEGER DEFAULT 0,
-  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (project_id) REFERENCES projects(id),
-  UNIQUE(project_id, date)
-);
+-- posts, engagements, github_stats は schema.sql 参照
 ```
 
 ## API エンドポイント
 
 ### 公開API（認証不要）
-- `GET /api/projects` - プロジェクト一覧
-- `GET /api/projects/:id` - プロジェクト詳細
+- `GET /api/projects/:id` - プロジェクト詳細（is_public=1のみ）
 - `GET /api/projects/:id/engagements` - エンゲージメント履歴
 
-### 管理API（認証必要）
+### 認証必要API
+- `GET /api/projects` - 自分のプロジェクト一覧
 - `POST /api/projects` - プロジェクト追加
 - `POST /api/posts` - 投稿追加
-- `PUT /api/posts/:id` - 投稿編集
 - `DELETE /api/posts/:id` - 投稿削除
 
 ## ディレクトリ構成
@@ -155,32 +148,17 @@ CREATE TABLE github_stats (
 open-sen/
 ├── api/                    # Cloudflare Worker (Hono)
 │   ├── src/
-│   │   ├── index.ts        # メインエントリ
-│   │   ├── routes/         # APIルート
-│   │   ├── cron/           # 定期実行処理
+│   │   ├── index.ts        # メインエントリ + ルート
 │   │   └── scrapers/       # 各サービスのスクレイパー
 │   ├── wrangler.toml       # Worker設定
 │   └── package.json
 ├── web/                    # フロントエンド（Astro + React）
 │   ├── src/
-│   ├── public/
+│   │   ├── layouts/        # Layout.astro
+│   │   ├── pages/          # index, projects/*
+│   │   └── components/     # React components
 │   └── package.json
 ├── schema.sql              # D1スキーマ
 ├── CLAUDE.md               # このファイル
-└── README.md
+└── README.md               # ユーザー向けドキュメント
 ```
-
-## 開発手順
-
-1. `wrangler` CLIをインストール
-2. D1データベースを作成
-3. Workerを実装
-4. フロントエンドを実装
-5. Cloudflare Accessを設定
-
-## 将来の拡張
-
-- 複数ユーザー対応
-- 投稿予約機能
-- 通知機能（急にバズった時）
-- 埋め込みウィジェット
