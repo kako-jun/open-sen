@@ -67,6 +67,34 @@ export default function EngagementChart({ projectId }: { projectId: string }) {
             {project.name}
           </span>
         </div>
+        {project.description && (
+          <p style={{
+            fontSize: '13px',
+            color: 'var(--text-secondary)',
+            margin: '6px 0 0',
+            lineHeight: 1.5,
+          }}>
+            {project.description}
+          </p>
+        )}
+        {project.url && (
+          <a
+            href={project.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+              fontSize: '12px',
+              color: 'var(--link-color)',
+              marginTop: '6px',
+            }}
+          >
+            <i className="fa-solid fa-link" style={{ fontSize: '10px' }}></i>
+            {project.url.replace(/^https?:\/\//, '').replace(/\/$/, '')}
+          </a>
+        )}
       </div>
 
       {/* GitHub Section - only shown if github_url exists */}
@@ -117,30 +145,32 @@ export default function EngagementChart({ projectId }: { projectId: string }) {
       {/* Posts - Section Header */}
       <div style={{
         display: 'flex',
-        justifyContent: 'space-between',
         alignItems: 'center',
+        gap: '8px',
+        marginTop: '20px',
         marginBottom: '8px',
       }}>
-        <h2 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
+        <h2 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', margin: 0, lineHeight: 1 }}>
           スイング記録
         </h2>
         <span style={{
           background: 'var(--btn-bg)',
           color: 'var(--text-primary)',
-          padding: '0 6px',
+          padding: '2px 6px',
           borderRadius: '10px',
           fontSize: '11px',
           fontWeight: 600,
+          lineHeight: 1,
           backdropFilter: 'blur(8px)',
         }}>
           {project.posts?.length || 0}
         </span>
       </div>
 
-      {/* Post Cards - Grid layout */}
+      {/* Post Cards - Grid layout (wider cards than product grid) */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(450px, 1fr))',
         gap: '8px',
       }}>
         {project.posts && project.posts.length > 0 ? (

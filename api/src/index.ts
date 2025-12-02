@@ -101,9 +101,33 @@ app.get('/api/users/:ownerId', async (c) => {
     'SELECT * FROM users WHERE id = ?'
   ).bind(ownerId).first()
   if (!user) {
-    return c.json({ id: ownerId, bio: null })
+    return c.json({ id: ownerId, bio: null, url: null })
   }
   return c.json(user)
+})
+
+// ユーザー情報更新（認証必須 + 本人のみ）
+app.patch('/api/users/:ownerId', requireAuth, async (c) => {
+  const userId = c.get('userId')
+  const ownerId = c.req.param('ownerId')
+
+  if (userId !== ownerId) {
+    return c.json({ error: 'Forbidden' }, 403)
+  }
+
+  const { bio, url } = await c.req.json()
+
+  // UPSERT
+  await c.env.DB.prepare(`
+    INSERT INTO users (id, bio, url, updated_at)
+    VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+    ON CONFLICT(id) DO UPDATE SET
+      bio = COALESCE(excluded.bio, bio),
+      url = COALESCE(excluded.url, url),
+      updated_at = CURRENT_TIMESTAMP
+  `).bind(ownerId, bio ?? null, url ?? null).run()
+
+  return c.json({ success: true })
 })
 
 // ユーザー別プロジェクト一覧
@@ -171,11 +195,11 @@ app.get('/api/projects/:id/engagements', async (c) => {
 // プロジェクト追加（認証必須）
 app.post('/api/projects', requireAuth, async (c) => {
   const userId = c.get('userId')
-  const { name, github_url } = await c.req.json()
+  const { name, description, url, github_url } = await c.req.json()
 
   const result = await c.env.DB.prepare(
-    'INSERT INTO projects (owner_id, name, github_url) VALUES (?, ?, ?)'
-  ).bind(userId, name, github_url).run()
+    'INSERT INTO projects (owner_id, name, description, url, github_url) VALUES (?, ?, ?, ?, ?)'
+  ).bind(userId, name, description ?? null, url ?? null, github_url ?? null).run()
 
   const projectId = result.meta.last_row_id
 
@@ -250,6 +274,40 @@ app.delete('/api/posts/:id', requireAuth, async (c) => {
 
   await c.env.DB.prepare('DELETE FROM engagements WHERE post_id = ?').bind(id).run()
   await c.env.DB.prepare('DELETE FROM posts WHERE id = ?').bind(id).run()
+
+  return c.json({ success: true })
+})
+
+// プロジェクト情報更新（認証必須 + 所有者のみ）
+app.patch('/api/projects/:id', requireAuth, async (c) => {
+  const userId = c.get('userId')
+  const id = c.req.param('id')
+  const { name, description, url, github_url } = await c.req.json()
+
+  // プロジェクトの所有者チェック
+  const project = await c.env.DB.prepare(
+    'SELECT owner_id FROM projects WHERE id = ?'
+  ).bind(id).first() as any
+
+  if (!project || project.owner_id !== userId) {
+    return c.json({ error: 'Forbidden' }, 403)
+  }
+
+  // 更新（指定されたフィールドのみ）
+  const updates: string[] = []
+  const values: any[] = []
+
+  if (name !== undefined) { updates.push('name = ?'); values.push(name) }
+  if (description !== undefined) { updates.push('description = ?'); values.push(description) }
+  if (url !== undefined) { updates.push('url = ?'); values.push(url) }
+  if (github_url !== undefined) { updates.push('github_url = ?'); values.push(github_url) }
+
+  if (updates.length > 0) {
+    values.push(id)
+    await c.env.DB.prepare(
+      `UPDATE projects SET ${updates.join(', ')} WHERE id = ?`
+    ).bind(...values).run()
+  }
 
   return c.json({ success: true })
 })

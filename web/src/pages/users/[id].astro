@@ -13,12 +13,11 @@ const shortId = id?.substring(0, 8) || '';
   </div>
 
   <div style="margin-bottom: 12px;">
-    <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
-      <i class="fa-solid fa-user" style="font-size: 14px; color: var(--text-secondary);"></i>
-      <span style="font-size: 16px; font-weight: 600; color: var(--text-primary);">{shortId}</span>
+    <div style="display: flex; align-items: center; gap: 6px; font-size: 18px;">
+      <span style="color: var(--text-primary); font-weight: 600;">{shortId}</span>
     </div>
     <UserBio client:load userId={id} />
   </div>
 
-  <ProductGrid client:load ownerId={id} />
+  <ProductGrid client:load ownerId={id} showHeader={true} headerTitle={`${shortId} の打席`} />
 </Layout>

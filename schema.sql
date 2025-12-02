@@ -1,11 +1,22 @@
 -- open-sen D1 Schema
 
+-- ユーザー情報（任意で設定可能）
+CREATE TABLE IF NOT EXISTS users (
+  id TEXT PRIMARY KEY,  -- owner_id (Cloudflare Access の subject ID ハッシュ)
+  bio TEXT,             -- 自己紹介（一言）
+  url TEXT,             -- 公式サイトURL
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
 -- プロジェクト（OSSツールなど）
 -- owner_id: Cloudflare Access の subject ID（ハッシュ済み、個人情報ではない）
 CREATE TABLE IF NOT EXISTS projects (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   owner_id TEXT NOT NULL,
   name TEXT NOT NULL,
+  description TEXT,     -- 一言紹介
+  url TEXT,             -- 公式サイトURL
   github_url TEXT,
   is_public INTEGER DEFAULT 0,  -- 1 = 公開ダッシュボード
   created_at TEXT DEFAULT CURRENT_TIMESTAMP

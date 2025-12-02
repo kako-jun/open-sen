@@ -27,6 +27,7 @@ export interface Project {
   id: number;
   name: string;
   description?: string | null;
+  url?: string | null;
   github_url: string | null;
   owner_id: string;
   created_at: string;

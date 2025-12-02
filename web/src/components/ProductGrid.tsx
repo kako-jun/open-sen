@@ -10,11 +10,13 @@ interface ProductGridProps {
   ownerId?: string;
   limit?: number;
   infiniteScroll?: boolean;
+  showHeader?: boolean;
+  headerTitle?: string;
 }
 
 const ITEMS_PER_PAGE = 12;
 
-export default function ProductGrid({ ownerId, limit, infiniteScroll = false }: ProductGridProps) {
+export default function ProductGrid({ ownerId, limit, infiniteScroll = false, showHeader = false, headerTitle = '' }: ProductGridProps) {
   const [allProjects, setAllProjects] = useState<Project[]>([]);
   const [displayedProjects, setDisplayedProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
@@ -163,11 +165,36 @@ export default function ProductGrid({ ownerId, limit, infiniteScroll = false }: 
   };
 
   return (
-    <div style={{
-      display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-      gap: '4px',
-    }}>
+    <div>
+      {showHeader && headerTitle && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          marginBottom: '8px',
+        }}>
+          <h2 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', margin: 0, lineHeight: 1 }}>
+            {headerTitle}
+          </h2>
+          <span style={{
+            background: 'var(--btn-bg)',
+            color: 'var(--text-primary)',
+            padding: '2px 6px',
+            borderRadius: '10px',
+            fontSize: '11px',
+            fontWeight: 600,
+            lineHeight: 1,
+            backdropFilter: 'blur(8px)',
+          }}>
+            {allProjects.length}
+          </span>
+        </div>
+      )}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+        gap: '4px',
+      }}>
       {projects.map((project) => {
         const latestStars = project.github?.[project.github.length - 1]?.stars;
         const starHistory = project.github?.map(g => g.stars) || [];
@@ -326,7 +353,18 @@ export default function ProductGrid({ ownerId, limit, infiniteScroll = false }: 
 
       {/* Infinite scroll trigger */}
       {infiniteScroll && (
-        <div ref={loadMoreRef} style={{ padding: '20px', textAlign: 'center' }}>
+        <div
+          ref={loadMoreRef}
+          className="card"
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: '120px',
+            padding: '20px',
+          }}
+        >
           {loadingMore && (
             <span style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>
               <i className="fa-solid fa-spinner fa-spin" style={{ marginRight: '6px' }}></i>
@@ -334,15 +372,21 @@ export default function ProductGrid({ ownerId, limit, infiniteScroll = false }: 
             </span>
           )}
           {!hasMore && allProjects.length > 0 && (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-              <i className="fa-solid fa-circle-check" style={{ fontSize: '24px', color: 'var(--accent-primary)' }}></i>
+            <>
+              <i className="fa-solid fa-circle-check" style={{ fontSize: '28px', color: 'var(--accent-primary)', marginBottom: '8px' }}></i>
               <span style={{ color: 'var(--text-muted)', fontSize: '11px' }}>
                 すべてのプロジェクトを表示しました
               </span>
-            </div>
+            </>
+          )}
+          {hasMore && !loadingMore && (
+            <span style={{ color: 'var(--text-muted)', fontSize: '11px' }}>
+              スクロールで続きを読み込み
+            </span>
           )}
         </div>
       )}
+      </div>
     </div>
   );
 }

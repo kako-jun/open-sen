@@ -3,6 +3,8 @@ import { API_BASE, getAuthToken } from '../utils/api';
 
 export default function ProjectForm() {
   const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [url, setUrl] = useState('');
   const [githubUrl, setGithubUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -26,7 +28,12 @@ export default function ProjectForm() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({ name, github_url: githubUrl || null }),
+        body: JSON.stringify({
+          name,
+          description: description || null,
+          url: url || null,
+          github_url: githubUrl || null,
+        }),
       });
 
       if (!res.ok) {
@@ -94,6 +101,38 @@ export default function ProjectForm() {
           />
           <p style={{ color: 'var(--text-secondary)', fontSize: '11px', marginTop: '4px' }}>
             プロモーションするプロジェクトやお店の名前
+          </p>
+        </div>
+
+        <div style={{ marginBottom: '12px' }}>
+          <label style={labelStyle}>一言紹介</label>
+          <input
+            type="text"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="e.g., Neovimの変更履歴をチャンク単位で管理するプラグイン"
+            style={inputStyle}
+            onFocus={(e) => e.currentTarget.style.borderColor = 'var(--link-color)'}
+            onBlur={(e) => e.currentTarget.style.borderColor = 'var(--border-color)'}
+          />
+          <p style={{ color: 'var(--text-secondary)', fontSize: '11px', marginTop: '4px' }}>
+            プロジェクトの簡単な説明
+          </p>
+        </div>
+
+        <div style={{ marginBottom: '12px' }}>
+          <label style={labelStyle}>公式サイトURL</label>
+          <input
+            type="url"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            placeholder="https://example.com"
+            style={inputStyle}
+            onFocus={(e) => e.currentTarget.style.borderColor = 'var(--link-color)'}
+            onBlur={(e) => e.currentTarget.style.borderColor = 'var(--border-color)'}
+          />
+          <p style={{ color: 'var(--text-secondary)', fontSize: '11px', marginTop: '4px' }}>
+            プロジェクトの公式サイトやランディングページのURL
           </p>
         </div>
 
