@@ -7,4 +7,9 @@ export default defineConfig({
   output: 'server',  // SSRでCloudflare Accessのヘッダーを取得
   adapter: cloudflare(),
   site: 'https://open-sen.llll-ll.com',
+  vite: {
+    define: {
+      'import.meta.env.PUBLIC_API_URL': JSON.stringify(process.env.PUBLIC_API_URL || ''),
+    },
+  },
 });

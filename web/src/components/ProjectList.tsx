@@ -16,13 +16,17 @@ const RepoIcon = () => (
   </svg>
 );
 
-export default function ProjectList() {
+interface ProjectListProps {
+  isLoggedIn?: boolean;
+}
+
+export default function ProjectList({ isLoggedIn = false }: ProjectListProps) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch(`${API_BASE}/api/projects`)
+    fetch(`${API_BASE}/api/projects`, { credentials: 'include' })
       .then((res) => res.json())
       .then((data) => {
         setProjects(data);
@@ -53,18 +57,22 @@ export default function ProjectList() {
       }}>
         <RepoIcon />
         <h3 style={{ color: '#e6edf3', fontSize: '20px', margin: '16px 0 8px' }}>
-          まだプロジェクトがありません
+          {isLoggedIn ? 'まだプロジェクトがありません' : '公開プロジェクトはありません'}
         </h3>
-        <p style={{ color: '#8b949e', fontSize: '14px', marginBottom: '16px' }}>
-          最初のプロジェクトを追加して、プロモーション活動を始めよう！
-        </p>
-        <a
-          href="/projects/new"
-          className="btn btn-primary"
-          style={{ textDecoration: 'none' }}
-        >
-          New Project
-        </a>
+        {isLoggedIn && (
+          <>
+            <p style={{ color: '#8b949e', fontSize: '14px', marginBottom: '16px' }}>
+              最初のプロジェクトを追加して、プロモーション活動を始めよう！
+            </p>
+            <a
+              href="/projects/new"
+              className="btn btn-primary"
+              style={{ textDecoration: 'none' }}
+            >
+              New Project
+            </a>
+          </>
+        )}
       </div>
     );
   }

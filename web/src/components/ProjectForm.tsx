@@ -2,6 +2,12 @@ import { useState } from 'react';
 
 const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:8787';
 
+// Get JWT from cookie
+function getAuthToken(): string | null {
+  const match = document.cookie.match(/CF_Authorization=([^;]+)/);
+  return match ? match[1] : null;
+}
+
 export default function ProjectForm() {
   const [name, setName] = useState('');
   const [githubUrl, setGithubUrl] = useState('');
@@ -13,10 +19,20 @@ export default function ProjectForm() {
     setLoading(true);
     setError(null);
 
+    const token = getAuthToken();
+    if (!token) {
+      setError('Not authenticated. Please sign in.');
+      setLoading(false);
+      return;
+    }
+
     try {
       const res = await fetch(`${API_BASE}/api/projects`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
         body: JSON.stringify({ name, github_url: githubUrl || null }),
       });
 
@@ -89,7 +105,7 @@ export default function ProjectForm() {
             onBlur={(e) => e.currentTarget.style.borderColor = '#30363d'}
           />
           <p style={{ color: '#8b949e', fontSize: '12px', marginTop: '4px' }}>
-            プロモーションするOSSプロジェクトの名前
+            プロモーションするプロジェクトやお店の名前
           </p>
         </div>
 

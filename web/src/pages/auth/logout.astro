@@ -1,0 +1,5 @@
+---
+// Clear the auth cookie and redirect to home
+Astro.cookies.delete('CF_Authorization', { path: '/' });
+return Astro.redirect('/');
+---

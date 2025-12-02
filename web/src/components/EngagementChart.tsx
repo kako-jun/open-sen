@@ -77,8 +77,8 @@ export default function EngagementChart({ projectId }: { projectId: string }) {
 
   useEffect(() => {
     Promise.all([
-      fetch(`${API_BASE}/api/projects/${projectId}`).then((res) => res.json()),
-      fetch(`${API_BASE}/api/projects/${projectId}/engagements`).then((res) => res.json()),
+      fetch(`${API_BASE}/api/projects/${projectId}`, { credentials: 'include' }).then((res) => res.json()),
+      fetch(`${API_BASE}/api/projects/${projectId}/engagements`, { credentials: 'include' }).then((res) => res.json()),
     ])
       .then(([projectData, engagementData]) => {
         setProject(projectData);

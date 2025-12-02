@@ -5,6 +5,10 @@ interface Props {
 
 const { title } = Astro.props;
 
+// Check if user is logged in
+const cfAuth = Astro.cookies.get('CF_Authorization')?.value;
+const isLoggedIn = !!cfAuth;
+
 // Encouraging messages for the baseball theme
 const encouragements = [
   "Play ball! 今日も打席に立とう",
@@ -102,13 +106,24 @@ const randomMessage = encouragements[Math.floor(Math.random() * encouragements.l
         <div style="display: flex; gap: 16px; font-size: 14px;">
           <a href="/projects" style="color: #e6edf3; padding: 4px 8px; border-radius: 6px;">Projects</a>
         </div>
-        <div style="margin-left: auto;">
-          <a href="/projects/new" class="btn btn-primary">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-              <path d="M7.75 2a.75.75 0 0 1 .75.75V7h4.25a.75.75 0 0 1 0 1.5H8.5v4.25a.75.75 0 0 1-1.5 0V8.5H2.75a.75.75 0 0 1 0-1.5H7V2.75A.75.75 0 0 1 7.75 2Z"/>
-            </svg>
-            New Project
-          </a>
+        <div style="margin-left: auto; display: flex; gap: 12px; align-items: center;">
+          {isLoggedIn ? (
+            <>
+              <a href="/projects/new" class="btn btn-primary">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M7.75 2a.75.75 0 0 1 .75.75V7h4.25a.75.75 0 0 1 0 1.5H8.5v4.25a.75.75 0 0 1-1.5 0V8.5H2.75a.75.75 0 0 1 0-1.5H7V2.75A.75.75 0 0 1 7.75 2Z"/>
+                </svg>
+                New Project
+              </a>
+              <a href="/auth/logout" class="btn">
+                Sign out
+              </a>
+            </>
+          ) : (
+            <a href="/auth/login" class="btn btn-primary">
+              Sign in
+            </a>
+          )}
         </div>
       </nav>
     </header>

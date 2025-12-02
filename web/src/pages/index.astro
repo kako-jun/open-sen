@@ -5,24 +5,14 @@ import Layout from '../layouts/Layout.astro';
 <Layout title="Dashboard">
   <h1 style="font-size: 2rem; margin-bottom: 1rem;">open-sen</h1>
   <p style="color: #94a3b8; margin-bottom: 2rem;">
-    OSSプロモーション活動を記録・可視化するダッシュボード
+    プロモーション活動を記録・可視化するダッシュボード
   </p>
 
-  <div style="display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
-    <div style="background: #1e293b; padding: 1.5rem; border-radius: 0.5rem;">
-      <h2 style="font-size: 1.25rem; margin-bottom: 0.5rem;">Projects</h2>
-      <p style="color: #94a3b8;">登録されたプロジェクト一覧</p>
-      <a href="/projects" style="display: inline-block; margin-top: 1rem;">
-        View all →
-      </a>
-    </div>
-
-    <div style="background: #1e293b; padding: 1.5rem; border-radius: 0.5rem;">
-      <h2 style="font-size: 1.25rem; margin-bottom: 0.5rem;">Add Project</h2>
-      <p style="color: #94a3b8;">新しいプロジェクトを追加</p>
-      <a href="/projects/new" style="display: inline-block; margin-top: 1rem;">
-        Add →
-      </a>
-    </div>
+  <div style="background: #1e293b; padding: 1.5rem; border-radius: 0.5rem; max-width: 600px;">
+    <h2 style="font-size: 1.25rem; margin-bottom: 0.5rem;">Projects</h2>
+    <p style="color: #94a3b8;">登録されたプロジェクト一覧</p>
+    <a href="/projects" style="display: inline-block; margin-top: 1rem;">
+      View all →
+    </a>
   </div>
 </Layout>

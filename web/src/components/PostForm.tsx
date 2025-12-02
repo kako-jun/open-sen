@@ -43,6 +43,7 @@ export default function PostForm({ projectId, onSuccess }: PostFormProps) {
       const res = await fetch(`${API_BASE}/api/posts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           project_id: parseInt(projectId),
           platform,

@@ -1,18 +1,15 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import ProjectList from '../../components/ProjectList';
+
+const cfAuth = Astro.cookies.get('CF_Authorization')?.value;
+const isLoggedIn = !!cfAuth;
 ---
 
 <Layout title="Projects">
   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
     <h1 style="font-size: 2rem;">Projects</h1>
-    <a
-      href="/projects/new"
-      style="background: #3b82f6; color: white; padding: 0.5rem 1rem; border-radius: 0.25rem;"
-    >
-      + Add Project
-    </a>
   </div>
 
-  <ProjectList client:load />
+  <ProjectList client:load isLoggedIn={isLoggedIn} />
 </Layout>

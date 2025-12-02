@@ -2,6 +2,11 @@
 
 プロモーション活動を記録・可視化するダッシュボード。
 
+## 本番環境
+
+- **Web**: https://open-sen.llll-ll.com
+- **API**: https://api.open-sen.llll-ll.com
+
 ## 名前の由来
 
 野球の「オープン戦」にかけて:
@@ -41,8 +46,8 @@
 
 - 個人情報（メールアドレス、GitHubユーザー名等）は**保存しない**
 - `owner_id`はCloudflare Accessのsubject ID（ハッシュ済み）
-- アバターはGitHubから取得せず、パワプロ風キャラを自動生成
-- ユーザーは任意でアバターをカスタマイズ可能
+- アバターはGitHubから取得せず、パワプロ風キャラを自動生成（予定）
+- ユーザーは任意でアバターをカスタマイズ可能（予定）
 
 ### ホスティング方針
 
@@ -59,12 +64,10 @@
 - [x] DBスキーマ (owner_id, is_public対応)
 - [x] 免責事項 (README + フッター)
 - [x] プラットフォーム対応 (開発者向け + 一般向け)
-
-### 残り (v1 - デプロイに必要)
-- [ ] Cloudflare Access認証ミドルウェア
-- [ ] APIにowner_idチェック追加
-- [ ] D1データベース作成 & マイグレーション
-- [ ] Workers/Pagesデプロイ設定
+- [x] Cloudflare Access認証 (One-time PIN)
+- [x] D1データベース作成 & マイグレーション
+- [x] Workers/Pagesデプロイ
+- [x] カスタムドメイン設定
 
 ### 将来 (v2)
 - [ ] パワプロ風アバター生成コンポーネント
@@ -79,17 +82,44 @@
 
 ### バックエンド
 - **Cloudflare Workers**: API (Hono)
-- **Cloudflare Cron Triggers**: 1日1回の定期実行
+- **Cloudflare Cron Triggers**: 1日1回の定期実行（毎日15:00 UTC）
 - **Cloudflare D1**: SQLiteベースのDB
 
 ### フロントエンド
-- **Astro + React**: SSG + インタラクティブコンポーネント
+- **Astro + React**: SSR + インタラクティブコンポーネント
 - **Recharts**: グラフ描画
 - **Cloudflare Pages**: ホスティング
 
 ### 認証
-- **Cloudflare Access**: GitHub認証
-- アバター等の追加権限は不要（ワンクリックログイン）
+- **Cloudflare Access**: One-time PIN認証（メール）
+- `/auth/*` パスのみ保護（他ページは認証なしで閲覧可能）
+
+## 認証フロー
+
+```
+1. ユーザーが「Sign in」ボタンをクリック
+   ↓
+2. /auth/login にアクセス
+   ↓
+3. Cloudflare Access が認証画面を表示（メール → PIN入力）
+   ↓
+4. 認証成功後、Cloudflare Access が Cf-Access-Jwt-Assertion ヘッダー付きでリダイレクト
+   ↓
+5. /auth/login が JWT を CF_Authorization Cookie に保存
+   ↓
+6. /projects にリダイレクト
+   ↓
+7. APIリクエスト時、JavaScript が Cookie から JWT を取得し Authorization ヘッダーで送信
+```
+
+### 重要な実装詳細
+
+- **Cookie はサブドメイン間で共有されない**: `open-sen.llll-ll.com` の Cookie は `api.open-sen.llll-ll.com` に送信されない
+- **解決策**: クライアント側で Cookie を読み取り、`Authorization: Bearer {token}` ヘッダーで送信
+- **API は3つの認証方法をサポート**:
+  1. `Cf-Access-Jwt-Assertion` ヘッダー（Cloudflare Access が直接設定）
+  2. `Authorization: Bearer` ヘッダー（クライアントが設定）
+  3. `CF_Authorization` Cookie（同一ドメインの場合）
 
 ## データ取得方法
 
@@ -133,14 +163,16 @@ CREATE TABLE projects (
 ## API エンドポイント
 
 ### 公開API（認証不要）
-- `GET /api/projects/:id` - プロジェクト詳細（is_public=1のみ）
+- `GET /api/projects` - 公開プロジェクト一覧（is_public=1のみ）
+- `GET /api/projects/:id` - プロジェクト詳細（is_public=1または自分のプロジェクト）
 - `GET /api/projects/:id/engagements` - エンゲージメント履歴
 
 ### 認証必要API
-- `GET /api/projects` - 自分のプロジェクト一覧
+- `GET /api/projects` - 自分のプロジェクト一覧（認証時）
 - `POST /api/projects` - プロジェクト追加
 - `POST /api/posts` - 投稿追加
 - `DELETE /api/posts/:id` - 投稿削除
+- `PATCH /api/projects/:id/visibility` - 公開設定変更
 
 ## ディレクトリ構成
 
@@ -148,15 +180,25 @@ CREATE TABLE projects (
 open-sen/
 ├── api/                    # Cloudflare Worker (Hono)
 │   ├── src/
-│   │   ├── index.ts        # メインエントリ + ルート
+│   │   ├── index.ts        # メインエントリ + ルート + 認証ミドルウェア
 │   │   └── scrapers/       # 各サービスのスクレイパー
-│   ├── wrangler.toml       # Worker設定
+│   ├── wrangler.toml       # Worker設定（D1バインディング、カスタムドメイン、Cron）
 │   └── package.json
 ├── web/                    # フロントエンド（Astro + React）
 │   ├── src/
-│   │   ├── layouts/        # Layout.astro
-│   │   ├── pages/          # index, projects/*
-│   │   └── components/     # React components
+│   │   ├── layouts/        # Layout.astro（ヘッダー、ログイン状態表示）
+│   │   ├── pages/
+│   │   │   ├── index.astro
+│   │   │   ├── auth/
+│   │   │   │   ├── login.astro   # 認証後Cookie設定
+│   │   │   │   └── logout.astro  # Cookie削除
+│   │   │   └── projects/
+│   │   │       ├── index.astro
+│   │   │       ├── new.astro
+│   │   │       └── [id].astro
+│   │   └── components/     # React components（ProjectList, ProjectForm等）
+│   ├── astro.config.mjs    # Vite define でビルド時に環境変数を埋め込み
+│   ├── wrangler.toml       # Pages設定
 │   └── package.json
 ├── schema.sql              # D1スキーマ
 ├── CLAUDE.md               # このファイル
@@ -169,10 +211,10 @@ open-sen/
 
 ```bash
 cd api
-wrangler d1 create open-sen-db
+npx wrangler d1 create open-sen-db
 # 出力されたdatabase_idをwrangler.tomlに設定
 
-wrangler d1 execute open-sen-db --file=../schema.sql
+npx wrangler d1 execute open-sen-db --remote --file=../schema.sql
 ```
 
 ### 2. API (Workers) デプロイ
@@ -180,7 +222,7 @@ wrangler d1 execute open-sen-db --file=../schema.sql
 ```bash
 cd api
 npm install
-wrangler deploy
+npx wrangler deploy
 ```
 
 ### 3. Web (Pages) デプロイ
@@ -188,8 +230,8 @@ wrangler deploy
 ```bash
 cd web
 npm install
-npm run build
-wrangler pages deploy dist --project-name=open-sen
+PUBLIC_API_URL=https://api.open-sen.llll-ll.com npm run build
+npx wrangler pages deploy dist
 ```
 
 ### 4. Cloudflare Access設定
@@ -199,22 +241,41 @@ wrangler pages deploy dist --project-name=open-sen
 3. Application name: `open-sen`
 4. Session Duration: 24 hours
 5. Application domain: `open-sen.llll-ll.com`
-6. Identity providers: GitHub を追加
-7. Policy: Allow - Everyone (GitHub認証済みなら誰でも)
+6. **Path: `auth/*`**（重要：サイト全体ではなくauth配下のみ保護）
+7. Identity providers: One-time PIN（メール認証）
+8. Policy: Allow - Everyone
 
 ### 5. カスタムドメイン設定
 
-1. DNSでCNAMEを設定
-   - `open-sen.llll-ll.com` → Pages URL
-   - `api.open-sen.llll-ll.com` → Workers URL (任意)
-2. Cloudflare Pages → Custom domains で設定
+wrangler.toml の `custom_domain = true` で自動設定される:
+- `api.open-sen.llll-ll.com` → Workers（api/wrangler.toml）
+- `open-sen.llll-ll.com` → Pages（Pagesダッシュボードで設定）
+
+## ローカル開発
+
+### API
+
+```bash
+cd api
+npm install
+npx wrangler dev
+# http://localhost:8787
+```
+
+### Web
+
+```bash
+cd web
+npm install
+npm run dev
+# http://localhost:4321
+```
 
 ### 環境変数
 
 ```bash
 # web/.env (ローカル開発用)
 PUBLIC_API_URL=http://localhost:8787
-
-# 本番はCloudflare Pagesの環境変数で設定
-# PUBLIC_API_URL=https://open-sen-api.{account}.workers.dev
 ```
+
+本番ビルド時は `PUBLIC_API_URL=https://api.open-sen.llll-ll.com npm run build` で指定。

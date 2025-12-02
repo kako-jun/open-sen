@@ -1,0 +1,36 @@
+---
+// This page is protected by Cloudflare Access (path: /auth/*)
+// Cloudflare Access automatically shows login screen and sets Cf-Access-Jwt-Assertion header
+
+// Try to get JWT from header (set by Cloudflare Access after authentication)
+let cfAccessJwt = Astro.request.headers.get('Cf-Access-Jwt-Assertion');
+
+// Also check CF_Authorization cookie (set by Access itself)
+if (!cfAccessJwt) {
+  cfAccessJwt = Astro.cookies.get('CF_Authorization')?.value ?? null;
+}
+
+if (!cfAccessJwt) {
+  // Debug: show all headers
+  const headers: Record<string, string> = {};
+  Astro.request.headers.forEach((value, key) => {
+    headers[key] = value;
+  });
+  return new Response(JSON.stringify({ error: 'No JWT found', headers }, null, 2), {
+    status: 401,
+    headers: { 'Content-Type': 'application/json' }
+  });
+}
+
+// Set the JWT as a cookie for API requests (ensure it's available for our app)
+Astro.cookies.set('CF_Authorization', cfAccessJwt, {
+  path: '/',
+  httpOnly: false, // Need to read in JS for API calls
+  secure: true,
+  sameSite: 'lax',
+  maxAge: 60 * 60 * 24, // 24 hours
+});
+
+// Redirect to projects page
+return Astro.redirect('/projects');
+---

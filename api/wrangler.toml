@@ -2,15 +2,15 @@ name = "open-sen-api"
 main = "src/index.ts"
 compatibility_date = "2024-01-01"
 
-# カスタムドメイン (Cloudflareダッシュボードで設定後)
-# routes = [
-#   { pattern = "api.open-sen.llll-ll.com", custom_domain = true }
-# ]
+# カスタムドメイン
+routes = [
+  { pattern = "api.open-sen.llll-ll.com", custom_domain = true }
+]
 
 [[d1_databases]]
 binding = "DB"
 database_name = "open-sen-db"
-database_id = "" # wrangler d1 create で取得後に設定
+database_id = "c513e902-5793-47f7-9728-8c60f9effc3e"
 
 [triggers]
 crons = ["0 15 * * *"] # 毎日0時（JST = UTC+9 → 15時UTC）に実行

@@ -13,12 +13,35 @@ type Variables = {
 const app = new Hono<{ Bindings: Bindings; Variables: Variables }>()
 
 // CORS設定
-app.use('/*', cors())
+app.use('/*', cors({
+  origin: ['https://open-sen.llll-ll.com', 'http://localhost:4321'],
+  credentials: true,
+}))
 
 // Cloudflare Access認証ミドルウェア
-// Cf-Access-Jwt-Assertionヘッダーからユーザー情報を取得
+// Cf-Access-Jwt-Assertion、Authorization Bearer、またはCookieからユーザー情報を取得
 app.use('/*', async (c, next) => {
-  const cfAccessJwt = c.req.header('Cf-Access-Jwt-Assertion')
+  // ヘッダーからJWTを取得（優先順位: Cf-Access-Jwt-Assertion > Authorization Bearer > Cookie）
+  let cfAccessJwt = c.req.header('Cf-Access-Jwt-Assertion')
+
+  if (!cfAccessJwt) {
+    // Authorization Bearerヘッダーから取得を試みる
+    const authHeader = c.req.header('Authorization')
+    if (authHeader?.startsWith('Bearer ')) {
+      cfAccessJwt = authHeader.slice(7)
+    }
+  }
+
+  if (!cfAccessJwt) {
+    // Cookieから取得を試みる
+    const cookie = c.req.header('Cookie')
+    if (cookie) {
+      const match = cookie.match(/CF_Authorization=([^;]+)/)
+      if (match) {
+        cfAccessJwt = match[1]
+      }
+    }
+  }
 
   if (cfAccessJwt) {
     try {
@@ -53,15 +76,25 @@ app.get('/', (c) => {
   return c.json({ status: 'ok', name: 'open-sen' })
 })
 
-// 自分のプロジェクト一覧（認証必須）
-app.get('/api/projects', requireAuth, async (c) => {
+// プロジェクト一覧
+// ログイン時: 自分のプロジェクト
+// 未ログイン時: 公開プロジェクトのみ
+app.get('/api/projects', async (c) => {
   const userId = c.get('userId')
 
-  const { results } = await c.env.DB.prepare(
-    'SELECT * FROM projects WHERE owner_id = ? ORDER BY created_at DESC'
-  ).bind(userId).all()
-
-  return c.json(results)
+  if (userId) {
+    // ログイン時: 自分のプロジェクト
+    const { results } = await c.env.DB.prepare(
+      'SELECT * FROM projects WHERE owner_id = ? ORDER BY created_at DESC'
+    ).bind(userId).all()
+    return c.json(results)
+  } else {
+    // 未ログイン時: 公開プロジェクトのみ
+    const { results } = await c.env.DB.prepare(
+      'SELECT * FROM projects WHERE is_public = 1 ORDER BY created_at DESC'
+    ).all()
+    return c.json(results)
+  }
 })
 
 // プロジェクト詳細（公開 or 自分のプロジェクト）
@@ -137,7 +170,23 @@ app.post('/api/projects', requireAuth, async (c) => {
     'INSERT INTO projects (owner_id, name, github_url) VALUES (?, ?, ?)'
   ).bind(userId, name, github_url).run()
 
-  return c.json({ id: result.meta.last_row_id, name, github_url }, 201)
+  const projectId = result.meta.last_row_id
+
+  // GitHub URLがあれば即座にstatsを取得
+  let githubStats = null
+  if (github_url) {
+    const today = new Date().toISOString().split('T')[0]
+    const stats = await fetchGitHubStats(github_url)
+    if (stats) {
+      await c.env.DB.prepare(`
+        INSERT OR REPLACE INTO github_stats (project_id, date, stars, forks, issues)
+        VALUES (?, ?, ?, ?, ?)
+      `).bind(projectId, today, stats.stars, stats.forks, stats.issues).run()
+      githubStats = stats
+    }
+  }
+
+  return c.json({ id: projectId, name, github_url, github_stats: githubStats }, 201)
 })
 
 // 投稿追加（認証必須 + プロジェクト所有者チェック）
@@ -160,7 +209,19 @@ app.post('/api/posts', requireAuth, async (c) => {
     'INSERT INTO posts (project_id, platform, url, posted_at) VALUES (?, ?, ?, ?)'
   ).bind(project_id, platform, url, actualPostedAt).run()
 
-  return c.json({ id: result.meta.last_row_id }, 201)
+  const postId = result.meta.last_row_id
+
+  // 即座にエンゲージメント取得を実行
+  const today = new Date().toISOString().split('T')[0]
+  const engagement = await fetchEngagement(platform, url)
+  if (engagement) {
+    await c.env.DB.prepare(`
+      INSERT OR REPLACE INTO engagements (post_id, date, likes, comments, shares)
+      VALUES (?, ?, ?, ?, ?)
+    `).bind(postId, today, engagement.likes, engagement.comments, engagement.shares).run()
+  }
+
+  return c.json({ id: postId, engagement }, 201)
 })
 
 // 投稿削除（認証必須 + プロジェクト所有者チェック）
