@@ -162,3 +162,59 @@ open-sen/
 ├── CLAUDE.md               # このファイル
 └── README.md               # ユーザー向けドキュメント
 ```
+
+## デプロイ手順
+
+### 1. D1データベース作成
+
+```bash
+cd api
+wrangler d1 create open-sen-db
+# 出力されたdatabase_idをwrangler.tomlに設定
+
+wrangler d1 execute open-sen-db --file=../schema.sql
+```
+
+### 2. API (Workers) デプロイ
+
+```bash
+cd api
+npm install
+wrangler deploy
+```
+
+### 3. Web (Pages) デプロイ
+
+```bash
+cd web
+npm install
+npm run build
+wrangler pages deploy dist --project-name=open-sen
+```
+
+### 4. Cloudflare Access設定
+
+1. Cloudflareダッシュボード → Zero Trust → Access → Applications
+2. 「Add an application」→ Self-hosted
+3. Application name: `open-sen`
+4. Session Duration: 24 hours
+5. Application domain: `open-sen.llll-ll.com`
+6. Identity providers: GitHub を追加
+7. Policy: Allow - Everyone (GitHub認証済みなら誰でも)
+
+### 5. カスタムドメイン設定
+
+1. DNSでCNAMEを設定
+   - `open-sen.llll-ll.com` → Pages URL
+   - `api.open-sen.llll-ll.com` → Workers URL (任意)
+2. Cloudflare Pages → Custom domains で設定
+
+### 環境変数
+
+```bash
+# web/.env (ローカル開発用)
+PUBLIC_API_URL=http://localhost:8787
+
+# 本番はCloudflare Pagesの環境変数で設定
+# PUBLIC_API_URL=https://open-sen-api.{account}.workers.dev
+```
