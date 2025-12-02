@@ -1,18 +1,16 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import ProductGrid from '../components/ProductGrid';
 ---
 
-<Layout title="Dashboard">
-  <h1 style="font-size: 2rem; margin-bottom: 1rem;">open-sen</h1>
-  <p style="color: #94a3b8; margin-bottom: 2rem;">
-    プロモーション活動を記録・可視化するダッシュボード
-  </p>
-
-  <div style="background: #1e293b; padding: 1.5rem; border-radius: 0.5rem; max-width: 600px;">
-    <h2 style="font-size: 1.25rem; margin-bottom: 0.5rem;">Projects</h2>
-    <p style="color: #94a3b8;">登録されたプロジェクト一覧</p>
-    <a href="/projects" style="display: inline-block; margin-top: 1rem;">
-      View all →
-    </a>
+<Layout title="みんなの打席">
+  <div style="margin-bottom: 8px; text-align: center;">
+    <h1 style="font-size: 16px; font-weight: 600; color: var(--text-primary); margin-bottom: 2px;">
+      みんなの打席
+    </h1>
+    <p style="font-size: 11px; color: var(--text-secondary);">
+      いま打席に立ってる挑戦者たち
+    </p>
   </div>
+  <ProductGrid client:load />
 </Layout>

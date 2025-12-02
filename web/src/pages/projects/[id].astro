@@ -4,17 +4,69 @@ import EngagementChart from '../../components/EngagementChart';
 import PostForm from '../../components/PostForm';
 
 const { id } = Astro.params;
+
+// ログイン状態とユーザーIDを取得
+const cfAuth = Astro.cookies.get('CF_Authorization')?.value;
+let currentUserId: string | null = null;
+
+if (cfAuth) {
+  try {
+    // JWTからemailを取得してハッシュ化（APIと同じロジック）
+    const parts = cfAuth.split('.');
+    if (parts.length === 3) {
+      const payload = JSON.parse(atob(parts[1]));
+      if (payload.email) {
+        const encoder = new TextEncoder();
+        const data = encoder.encode(payload.email.toLowerCase());
+        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        currentUserId = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      }
+    }
+  } catch (e) {
+    // JWT解析エラーは無視
+  }
+}
 ---
 
-<Layout title="Project Detail">
-  <div style="margin-bottom: 2rem;">
-    <a href="/projects" style="color: #94a3b8;">← Back to Projects</a>
+<Layout title="打席詳細">
+  <div style="margin-bottom: 8px;">
+    <a href="/" style="color: var(--text-secondary); font-size: 12px;">← 戻る</a>
   </div>
 
   <EngagementChart projectId={id} client:load />
 
-  <div style="margin-top: 2rem; background: #1e293b; padding: 1rem; border-radius: 0.5rem;">
-    <h3 style="margin-bottom: 0.5rem; font-size: 1rem;">Add Post</h3>
-    <PostForm projectId={id} client:load />
+  {/* 投稿追加フォーム - ログイン中かつ自分のプロジェクトの場合のみ表示 */}
+  <div id="post-form-container" style="display: none; margin-top: 12px;">
+    <div class="card" style="padding: 12px;">
+      <h3 style="margin-bottom: 8px; font-size: 13px; color: var(--text-primary);">投稿を追加</h3>
+      <PostForm projectId={id} client:load />
+    </div>
   </div>
+
+  <script define:vars={{ projectId: id, currentUserId }}>
+    async function initPage() {
+      try {
+        const API_BASE = 'http://localhost:8787';
+        const res = await fetch(`${API_BASE}/api/projects/${projectId}`, {
+          credentials: 'include'
+        });
+        const project = await res.json();
+
+        // タイトルを動的に更新
+        if (project.name) {
+          document.title = `${project.name} | open-sen`;
+        }
+
+        // 自分のプロジェクトなら投稿フォームを表示
+        if (currentUserId && project.owner_id === currentUserId) {
+          document.getElementById('post-form-container').style.display = 'block';
+        }
+      } catch (e) {
+        console.error('Failed to load project:', e);
+      }
+    }
+
+    initPage();
+  </script>
 </Layout>

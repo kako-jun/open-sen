@@ -49,8 +49,18 @@ app.use('/*', async (c, next) => {
       const parts = cfAccessJwt.split('.')
       if (parts.length === 3) {
         const payload = JSON.parse(atob(parts[1]))
-        // subがユーザーの一意識別子（ハッシュ済み）
-        c.set('userId', payload.sub || null)
+        // emailをSHA-256でハッシュ化してowner_idとして使用
+        // subは認証セッションごとに変わるため、emailベースのハッシュで同一性を保証
+        if (payload.email) {
+          const encoder = new TextEncoder()
+          const data = encoder.encode(payload.email.toLowerCase())
+          const hashBuffer = await crypto.subtle.digest('SHA-256', data)
+          const hashArray = Array.from(new Uint8Array(hashBuffer))
+          const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+          c.set('userId', hashHex)
+        } else {
+          c.set('userId', null)
+        }
       }
     } catch {
       c.set('userId', null)
@@ -76,42 +86,44 @@ app.get('/', (c) => {
   return c.json({ status: 'ok', name: 'open-sen' })
 })
 
-// プロジェクト一覧
-// ログイン時: 自分のプロジェクト
-// 未ログイン時: 公開プロジェクトのみ
+// 全プロジェクト一覧（新着順、全て公開）
 app.get('/api/projects', async (c) => {
-  const userId = c.get('userId')
-
-  if (userId) {
-    // ログイン時: 自分のプロジェクト
-    const { results } = await c.env.DB.prepare(
-      'SELECT * FROM projects WHERE owner_id = ? ORDER BY created_at DESC'
-    ).bind(userId).all()
-    return c.json(results)
-  } else {
-    // 未ログイン時: 公開プロジェクトのみ
-    const { results } = await c.env.DB.prepare(
-      'SELECT * FROM projects WHERE is_public = 1 ORDER BY created_at DESC'
-    ).all()
-    return c.json(results)
-  }
+  const { results } = await c.env.DB.prepare(
+    'SELECT * FROM projects ORDER BY created_at DESC'
+  ).all()
+  return c.json(results)
 })
 
-// プロジェクト詳細（公開 or 自分のプロジェクト）
+// ユーザー情報取得
+app.get('/api/users/:ownerId', async (c) => {
+  const ownerId = c.req.param('ownerId')
+  const user = await c.env.DB.prepare(
+    'SELECT * FROM users WHERE id = ?'
+  ).bind(ownerId).first()
+  if (!user) {
+    return c.json({ id: ownerId, bio: null })
+  }
+  return c.json(user)
+})
+
+// ユーザー別プロジェクト一覧
+app.get('/api/users/:ownerId/projects', async (c) => {
+  const ownerId = c.req.param('ownerId')
+  const { results } = await c.env.DB.prepare(
+    'SELECT * FROM projects WHERE owner_id = ? ORDER BY created_at DESC'
+  ).bind(ownerId).all()
+  return c.json(results)
+})
+
+// プロジェクト詳細（全て公開）
 app.get('/api/projects/:id', async (c) => {
   const id = c.req.param('id')
-  const userId = c.get('userId')
 
   const project = await c.env.DB.prepare(
     'SELECT * FROM projects WHERE id = ?'
   ).bind(id).first() as any
 
   if (!project) {
-    return c.json({ error: 'Not found' }, 404)
-  }
-
-  // 公開プロジェクト or 自分のプロジェクトのみアクセス可
-  if (!project.is_public && project.owner_id !== userId) {
     return c.json({ error: 'Not found' }, 404)
   }
 
@@ -123,21 +135,16 @@ app.get('/api/projects/:id', async (c) => {
   return c.json({ ...project, posts })
 })
 
-// プロジェクトのエンゲージメント履歴
+// プロジェクトのエンゲージメント履歴（全て公開）
 app.get('/api/projects/:id/engagements', async (c) => {
   const id = c.req.param('id')
-  const userId = c.get('userId')
 
-  // プロジェクトの存在確認とアクセス権チェック
+  // プロジェクトの存在確認
   const project = await c.env.DB.prepare(
     'SELECT * FROM projects WHERE id = ?'
   ).bind(id).first() as any
 
   if (!project) {
-    return c.json({ error: 'Not found' }, 404)
-  }
-
-  if (!project.is_public && project.owner_id !== userId) {
     return c.json({ error: 'Not found' }, 404)
   }
 

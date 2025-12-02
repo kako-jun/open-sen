@@ -50,49 +50,44 @@ export default function ProjectForm() {
 
   const inputStyle: React.CSSProperties = {
     width: '100%',
-    padding: '5px 12px',
+    padding: '4px 10px',
     fontSize: '14px',
     lineHeight: '20px',
-    color: '#e6edf3',
-    background: '#0d1117',
-    border: '1px solid #30363d',
+    color: 'var(--text-primary)',
+    background: 'var(--bg-primary)',
+    border: '1px solid var(--border-color)',
     borderRadius: '6px',
     outline: 'none',
   };
 
   const labelStyle: React.CSSProperties = {
     display: 'block',
-    marginBottom: '8px',
+    marginBottom: '6px',
     fontWeight: 600,
-    fontSize: '14px',
-    color: '#e6edf3',
+    fontSize: '13px',
+    color: 'var(--text-primary)',
   };
 
   return (
     <form onSubmit={handleSubmit} style={{ maxWidth: '600px' }}>
       {error && (
         <div style={{
-          background: '#490202',
-          border: '1px solid #f85149',
-          color: '#f85149',
-          padding: '12px 16px',
+          background: 'rgba(248, 81, 73, 0.1)',
+          border: '1px solid var(--accent-secondary)',
+          color: 'var(--accent-secondary)',
+          padding: '10px 12px',
           borderRadius: '6px',
-          marginBottom: '16px',
-          fontSize: '14px',
+          marginBottom: '12px',
+          fontSize: '13px',
         }}>
           {error}
         </div>
       )}
 
-      <div style={{
-        background: '#161b22',
-        border: '1px solid #30363d',
-        borderRadius: '6px',
-        padding: '16px',
-      }}>
-        <div style={{ marginBottom: '16px' }}>
+      <div className="card">
+        <div style={{ marginBottom: '12px' }}>
           <label style={labelStyle}>
-            Project name <span style={{ color: '#f85149' }}>*</span>
+            Project name <span style={{ color: 'var(--accent-secondary)' }}>*</span>
           </label>
           <input
             type="text"
@@ -101,15 +96,15 @@ export default function ProjectForm() {
             required
             placeholder="e.g., chunkundo.nvim"
             style={inputStyle}
-            onFocus={(e) => e.currentTarget.style.borderColor = '#58a6ff'}
-            onBlur={(e) => e.currentTarget.style.borderColor = '#30363d'}
+            onFocus={(e) => e.currentTarget.style.borderColor = 'var(--link-color)'}
+            onBlur={(e) => e.currentTarget.style.borderColor = 'var(--border-color)'}
           />
-          <p style={{ color: '#8b949e', fontSize: '12px', marginTop: '4px' }}>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '11px', marginTop: '4px' }}>
             プロモーションするプロジェクトやお店の名前
           </p>
         </div>
 
-        <div style={{ marginBottom: '16px' }}>
+        <div style={{ marginBottom: '12px' }}>
           <label style={labelStyle}>GitHub URL</label>
           <input
             type="url"
@@ -117,26 +112,22 @@ export default function ProjectForm() {
             onChange={(e) => setGithubUrl(e.target.value)}
             placeholder="https://github.com/username/repo"
             style={inputStyle}
-            onFocus={(e) => e.currentTarget.style.borderColor = '#58a6ff'}
-            onBlur={(e) => e.currentTarget.style.borderColor = '#30363d'}
+            onFocus={(e) => e.currentTarget.style.borderColor = 'var(--link-color)'}
+            onBlur={(e) => e.currentTarget.style.borderColor = 'var(--border-color)'}
           />
-          <p style={{ color: '#8b949e', fontSize: '12px', marginTop: '4px' }}>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '11px', marginTop: '4px' }}>
             GitHubリポジトリがあれば、Star数などを自動取得します
           </p>
         </div>
 
         <div style={{
-          borderTop: '1px solid #30363d',
-          paddingTop: '16px',
+          borderTop: '1px solid var(--border-color)',
+          paddingTop: '12px',
           display: 'flex',
           justifyContent: 'flex-end',
           gap: '8px',
         }}>
-          <a
-            href="/projects"
-            className="btn"
-            style={{ textDecoration: 'none' }}
-          >
+          <a href="/projects" className="btn" style={{ textDecoration: 'none' }}>
             Cancel
           </a>
           <button

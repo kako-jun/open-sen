@@ -9,25 +9,120 @@ const { title } = Astro.props;
 const cfAuth = Astro.cookies.get('CF_Authorization')?.value;
 const isLoggedIn = !!cfAuth;
 
-// Encouraging messages for the baseball theme
+// Encouraging messages - baseball theme + world proverbs about trying & failing
 const encouragements = [
+  // 野球系
   "Play ball! 今日も打席に立とう",
   "三振を恐れるな、バットを振れ",
   "ファウルも立派な粘り",
   "全打席ホームランの選手はいない",
   "次の一球に集中",
+  "バッターボックスに立つだけで偉い",
+  "送りバントも立派な仕事",
+  "代打でも結果を出せる",
+  "ベンチからでも声は届く",
+  "9回裏まで試合は終わらない",
+  // 日本のことわざ
+  "七転び八起き",
+  "石の上にも三年",
+  "千里の道も一歩から",
+  "雨降って地固まる",
+  "失敗は成功のもと",
+  "継続は力なり",
+  "塵も積もれば山となる",
+  "蒔かぬ種は生えぬ",
+  // 世界のことわざ
+  "Fall seven times, stand up eight (日本)",
+  "A journey of a thousand miles begins with a single step (中国)",
+  "The only real failure is the failure to try (英語圏)",
+  "He who never made a mistake never made anything (英語圏)",
+  "Petit à petit, l'oiseau fait son nid (仏: 少しずつ鳥は巣を作る)",
+  "Chi non risica non rosica (伊: 危険を冒さねば何も得られない)",
+  "Wer nicht wagt, der nicht gewinnt (独: 挑戦しなければ勝てない)",
+  "El que no arriesga no gana (西: 冒険しない者は勝てない)",
+  "Без труда не выловишь и рыбку из пруда (露: 労せずして池の魚は獲れない)",
+  "不怕慢，就怕站 (中: 遅れを恐れるな、止まることを恐れよ)",
+  "Practice makes perfect",
+  "Rome wasn't built in a day",
+  "Every master was once a disaster",
+  "The best time to plant a tree was 20 years ago. The second best time is now",
+  "Done is better than perfect",
+  "Ship it!",
 ];
 const randomMessage = encouragements[Math.floor(Math.random() * encouragements.length)];
 ---
 
 <!doctype html>
-<html lang="ja">
+<html lang="ja" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     <title>{title} | open-sen</title>
+    <script is:inline>
+      // Load theme from localStorage before render to prevent flash
+      (function() {
+        const saved = localStorage.getItem('theme');
+        if (saved) {
+          document.documentElement.setAttribute('data-theme', saved);
+        }
+      })();
+    </script>
     <style is:global>
+      /* ===== Theme Variables ===== */
+      :root {
+        /* Dark theme (Cyberpunk) - default */
+        --bg-image: url('/bg-cyber.svg');
+        --bg-overlay: rgba(10, 14, 20, 0.85);
+        --bg-card: rgba(22, 27, 34, 0.75);
+        --bg-header: rgba(22, 27, 34, 0.9);
+        --border-color: rgba(0, 255, 255, 0.2);
+        --border-glow: rgba(0, 255, 255, 0.4);
+        --text-primary: #e6edf3;
+        --text-secondary: #8b949e;
+        --text-muted: #6e7681;
+        --link-color: #00d4ff;
+        --accent-primary: #00ff9f;
+        --accent-secondary: #ff00ff;
+        --btn-bg: rgba(33, 38, 45, 0.7);
+        --btn-bg-hover: rgba(48, 54, 61, 0.8);
+        --btn-primary-bg: #00aa6f;
+        --btn-primary-hover: #00cc88;
+        --banner-bg: linear-gradient(90deg, rgba(0, 170, 111, 0.3) 0%, rgba(0, 212, 255, 0.3) 50%, rgba(0, 170, 111, 0.3) 100%);
+        --banner-border: #00ff9f;
+        --banner-text: #00ff9f;
+        --glass-bg: rgba(255, 255, 255, 0.03);
+        --glass-border: rgba(255, 255, 255, 0.1);
+        --shadow-glow: 0 0 20px rgba(0, 255, 255, 0.15);
+      }
+
+      [data-theme="light"] {
+        /* Light theme (Koshien / Summer Baseball) */
+        --bg-image: url('/bg-koshien.svg');
+        --bg-overlay: rgba(240, 247, 230, 0.7);
+        --bg-card: rgba(255, 255, 255, 0.85);
+        --bg-header: rgba(255, 255, 255, 0.9);
+        --border-color: rgba(0, 100, 0, 0.15);
+        --border-glow: rgba(0, 100, 0, 0.3);
+        --text-primary: #1a3d0c;
+        --text-secondary: #4a6741;
+        --text-muted: #6b8f5e;
+        --link-color: #2563eb;
+        --accent-primary: #16a34a;
+        --accent-secondary: #dc2626;
+        --btn-bg: rgba(255, 255, 255, 0.8);
+        --btn-bg-hover: rgba(255, 255, 255, 0.95);
+        --btn-primary-bg: #16a34a;
+        --btn-primary-hover: #15803d;
+        --banner-bg: linear-gradient(90deg, rgba(34, 197, 94, 0.9) 0%, rgba(22, 163, 74, 0.9) 50%, rgba(34, 197, 94, 0.9) 100%);
+        --banner-border: #16a34a;
+        --banner-text: #ffffff;
+        --glass-bg: rgba(255, 255, 255, 0.5);
+        --glass-border: rgba(0, 0, 0, 0.1);
+        --shadow-glow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+
       * {
         margin: 0;
         padding: 0;
@@ -35,19 +130,45 @@ const randomMessage = encouragements[Math.floor(Math.random() * encouragements.l
       }
       body {
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
-        background: #0d1117;
-        color: #e6edf3;
+        color: var(--text-primary);
         min-height: 100vh;
         line-height: 1.5;
+        overflow-x: hidden;
+      }
+      /* Fixed background image layer */
+      body::after {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-image: var(--bg-image);
+        background-size: cover;
+        background-position: center;
+        z-index: -2;
+        pointer-events: none;
+      }
+      /* Fixed overlay layer */
+      body::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: var(--bg-overlay);
+        z-index: -1;
+        pointer-events: none;
       }
       a {
-        color: #58a6ff;
+        color: var(--link-color);
         text-decoration: none;
       }
       a:hover {
         text-decoration: underline;
       }
-      /* GitHub-like styling */
+      /* Button styling */
       .btn {
         display: inline-flex;
         align-items: center;
@@ -57,90 +178,173 @@ const randomMessage = encouragements[Math.floor(Math.random() * encouragements.l
         font-weight: 500;
         line-height: 20px;
         border-radius: 6px;
-        border: 1px solid rgba(240, 246, 252, 0.1);
-        background-color: #21262d;
-        color: #c9d1d9;
+        border: 1px solid var(--border-color);
+        background-color: var(--btn-bg);
+        color: var(--text-primary);
         cursor: pointer;
-        transition: 0.2s;
+        transition: all 0.2s;
+        backdrop-filter: blur(8px);
       }
       .btn:hover {
-        background-color: #30363d;
-        border-color: #8b949e;
+        background-color: var(--btn-bg-hover);
+        border-color: var(--border-glow);
         text-decoration: none;
+        box-shadow: var(--shadow-glow);
       }
       .btn-primary {
-        background-color: #238636;
-        border-color: rgba(240, 246, 252, 0.1);
+        background-color: var(--btn-primary-bg);
+        border-color: transparent;
         color: #ffffff;
       }
       .btn-primary:hover {
-        background-color: #2ea043;
+        background-color: var(--btn-primary-hover);
       }
       /* Card styling */
       .card {
-        background: #161b22;
-        border: 1px solid #30363d;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
         border-radius: 6px;
         padding: 16px;
+        backdrop-filter: blur(12px);
+        box-shadow: var(--shadow-glow);
       }
+      /* Icon button */
+      .icon-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        color: var(--text-primary);
+        cursor: pointer;
+        transition: all 0.2s;
+        backdrop-filter: blur(8px);
+        text-decoration: none;
+      }
+      .icon-btn:hover {
+        background: var(--btn-bg-hover);
+        border-color: var(--border-glow);
+        box-shadow: var(--shadow-glow);
+        text-decoration: none;
+      }
+      /* Theme toggle button */
+      .theme-toggle {
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        border-radius: 50%;
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s;
+        backdrop-filter: blur(8px);
+      }
+      .theme-toggle:hover {
+        border-color: var(--border-glow);
+        box-shadow: var(--shadow-glow);
+        transform: rotate(15deg);
+      }
+      .theme-toggle svg {
+        width: 20px;
+        height: 20px;
+        color: var(--text-primary);
+      }
+      /* Hide icons based on theme */
+      [data-theme="dark"] .icon-sun { display: none; }
+      [data-theme="dark"] .icon-moon { display: inline; }
+      [data-theme="light"] .icon-sun { display: inline; }
+      [data-theme="light"] .icon-moon { display: none; }
     </style>
   </head>
   <body>
     <!-- Baseball-themed encouragement banner -->
-    <div style="background: linear-gradient(90deg, #1a472a 0%, #2d5a3d 50%, #1a472a 100%); padding: 8px 16px; text-align: center; border-bottom: 3px solid #238636;">
-      <span style="color: #7ee787; font-size: 14px; font-weight: 500;">
+    <div style="background: var(--banner-bg); padding: 8px 16px; text-align: center; border-bottom: 3px solid var(--banner-border);">
+      <span style="color: var(--banner-text); font-size: 14px; font-weight: 500;">
         {randomMessage}
       </span>
     </div>
 
-    <!-- GitHub-like header -->
-    <header style="background: #161b22; padding: 16px 32px; border-bottom: 1px solid #30363d;">
-      <nav style="display: flex; gap: 24px; align-items: center; max-width: 1280px; margin: 0 auto;">
-        <a href="/" style="display: flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 600; color: #e6edf3;">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"/>
-            <path d="M12 6v6l4 2"/>
-          </svg>
+    <!-- Header -->
+    <header style="background: var(--bg-header); padding: 8px 16px; border-bottom: 1px solid var(--border-color); backdrop-filter: blur(12px);">
+      <nav style="display: flex; gap: 16px; align-items: center; max-width: 1280px; margin: 0 auto;">
+        <a href="/" style="display: flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 600; color: var(--text-primary);">
+          <i class="fa-solid fa-baseball" style="font-size: 20px;"></i>
           open-sen
         </a>
-        <div style="display: flex; gap: 16px; font-size: 14px;">
-          <a href="/projects" style="color: #e6edf3; padding: 4px 8px; border-radius: 6px;">Projects</a>
-        </div>
-        <div style="margin-left: auto; display: flex; gap: 12px; align-items: center;">
+        <div style="margin-left: auto; display: flex; gap: 8px; align-items: center;">
+          <!-- Theme toggle button -->
+          <button class="theme-toggle" id="theme-toggle" title="テーマ切り替え">
+            <i class="icon-sun fa-solid fa-sun"></i>
+            <i class="icon-moon fa-solid fa-moon"></i>
+          </button>
           {isLoggedIn ? (
             <>
-              <a href="/projects/new" class="btn btn-primary">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                  <path d="M7.75 2a.75.75 0 0 1 .75.75V7h4.25a.75.75 0 0 1 0 1.5H8.5v4.25a.75.75 0 0 1-1.5 0V8.5H2.75a.75.75 0 0 1 0-1.5H7V2.75A.75.75 0 0 1 7.75 2Z"/>
-                </svg>
-                New Project
+              <a href="/projects/new" class="icon-btn" title="新規プロジェクト">
+                <i class="fa-solid fa-plus"></i>
               </a>
-              <a href="/auth/logout" class="btn">
-                Sign out
+              <a href="/auth/logout" class="icon-btn" title="サインアウト">
+                <i class="fa-solid fa-right-from-bracket"></i>
               </a>
             </>
           ) : (
-            <a href="/auth/login" class="btn btn-primary">
-              Sign in
+            <a href="/auth/login" class="icon-btn" title="サインイン">
+              <i class="fa-solid fa-right-to-bracket"></i>
             </a>
           )}
         </div>
       </nav>
     </header>
 
-    <main style="padding: 24px 32px; max-width: 1280px; margin: 0 auto;">
+    <main style="padding: 8px;">
       <slot />
     </main>
 
-    <!-- Footer -->
-    <footer style="padding: 40px 32px; border-top: 1px solid #30363d; margin-top: 40px;">
-      <div style="max-width: 1280px; margin: 0 auto; text-align: center; color: #8b949e; font-size: 12px;">
-        <p>open-sen - プロモーション活動を記録・可視化するダッシュボード</p>
-        <p style="margin-top: 8px;">さぁ、次の打席に立て！</p>
-        <p style="margin-top: 16px; font-size: 10px; color: #6e7681;">
-          個人情報は保存しません。保存データ: プロジェクト名、投稿URL、エンゲージメント数のみ。本サービスは無保証で提供されます。
-        </p>
-      </div>
-    </footer>
+    <!-- Back to top button -->
+    <button
+      id="back-to-top"
+      class="icon-btn"
+      title="トップへ戻る"
+      style="
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        display: none;
+        width: 44px;
+        height: 44px;
+        z-index: 1000;
+        box-shadow: var(--shadow-glow);
+      "
+    >
+      <i class="fa-solid fa-chevron-up"></i>
+    </button>
+
+    <!-- Theme toggle script -->
+    <script is:inline>
+      document.getElementById('theme-toggle').addEventListener('click', function() {
+        const html = document.documentElement;
+        const current = html.getAttribute('data-theme');
+        const next = current === 'dark' ? 'light' : 'dark';
+        html.setAttribute('data-theme', next);
+        localStorage.setItem('theme', next);
+      });
+
+      // Back to top button
+      const backToTopBtn = document.getElementById('back-to-top');
+      window.addEventListener('scroll', function() {
+        if (window.scrollY > 300) {
+          backToTopBtn.style.display = 'flex';
+        } else {
+          backToTopBtn.style.display = 'none';
+        }
+      });
+      backToTopBtn.addEventListener('click', function() {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    </script>
   </body>
 </html>

@@ -1,0 +1,20 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import ProductGrid from '../../components/ProductGrid';
+import UserBio from '../../components/UserBio';
+
+const { id } = Astro.params;
+const shortId = id?.substring(0, 8) || '';
+---
+
+<Layout title={`${shortId}の打席`}>
+  <div style="margin-bottom: 12px;">
+    <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+      <i class="fa-solid fa-user" style="font-size: 14px; color: var(--text-secondary);"></i>
+      <span style="font-size: 16px; font-weight: 600; color: var(--text-primary);">{shortId}</span>
+    </div>
+    <UserBio client:load userId={id} />
+  </div>
+
+  <ProductGrid client:load ownerId={id} />
+</Layout>

@@ -8,13 +8,12 @@ interface PostFormProps {
 }
 
 // Platform support status (auto-fetch = engagement data can be fetched automatically)
-// Divided into categories for better organization
 const PLATFORMS = [
   // Developer-focused platforms
   { value: 'zenn', label: 'Zenn', color: '#3ea8ff', autoFetch: true, category: 'dev' },
   { value: 'qiita', label: 'Qiita', color: '#55c500', autoFetch: true, category: 'dev' },
   { value: 'reddit', label: 'Reddit', color: '#ff4500', autoFetch: true, category: 'dev' },
-  // General platforms (for broader audience - ramen shops, indie makers, etc.)
+  // General platforms
   { value: 'note', label: 'Note', color: '#41c9b4', autoFetch: true, category: 'general' },
   { value: 'x', label: 'X (Twitter)', color: '#1d9bf0', autoFetch: false, category: 'general' },
   { value: 'instagram', label: 'Instagram', color: '#e4405f', autoFetch: false, category: 'general' },
@@ -22,7 +21,6 @@ const PLATFORMS = [
   { value: 'tiktok', label: 'TikTok', color: '#000000', autoFetch: false, category: 'general' },
   { value: 'facebook', label: 'Facebook', color: '#1877f2', autoFetch: false, category: 'general' },
   { value: 'threads', label: 'Threads', color: '#000000', autoFetch: false, category: 'general' },
-  // Other
   { value: 'other', label: 'Other', color: '#6e7681', autoFetch: false, category: 'other' },
 ];
 
@@ -67,58 +65,52 @@ export default function PostForm({ projectId, onSuccess }: PostFormProps) {
     }
   };
 
-  const inputStyle = {
-    padding: '0.5rem',
-    background: '#1e293b',
-    border: '1px solid #334155',
-    borderRadius: '0.25rem',
-    color: '#f8fafc',
-    fontSize: '0.875rem',
+  const inputStyle: React.CSSProperties = {
+    padding: '4px 8px',
+    background: 'var(--bg-primary)',
+    border: '1px solid var(--border-color)',
+    borderRadius: '4px',
+    color: 'var(--text-primary)',
+    fontSize: '13px',
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ marginTop: '1rem' }}>
+    <form onSubmit={handleSubmit} style={{ marginTop: '8px' }}>
       {error && (
-        <div
-          style={{
-            background: '#7f1d1d',
-            color: '#fecaca',
-            padding: '0.5rem',
-            borderRadius: '0.25rem',
-            marginBottom: '0.5rem',
-            fontSize: '0.875rem',
-          }}
-        >
+        <div style={{
+          background: 'rgba(248, 81, 73, 0.1)',
+          color: 'var(--accent-secondary)',
+          padding: '6px 10px',
+          borderRadius: '4px',
+          marginBottom: '6px',
+          fontSize: '12px',
+        }}>
           {error}
         </div>
       )}
 
       {success && (
-        <div
-          style={{
-            background: '#14532d',
-            color: '#bbf7d0',
-            padding: '0.5rem',
-            borderRadius: '0.25rem',
-            marginBottom: '0.5rem',
-            fontSize: '0.875rem',
-          }}
-        >
-          Post added successfully!
+        <div style={{
+          background: 'rgba(0, 255, 159, 0.1)',
+          color: 'var(--accent-primary)',
+          padding: '6px 10px',
+          borderRadius: '4px',
+          marginBottom: '6px',
+          fontSize: '12px',
+        }}>
+          Post added!
         </div>
       )}
 
-      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: '6px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
         <div>
-          <label
-            style={{ display: 'block', marginBottom: '0.25rem', color: '#94a3b8', fontSize: '0.75rem' }}
-          >
+          <label style={{ display: 'block', marginBottom: '2px', color: 'var(--text-secondary)', fontSize: '11px' }}>
             Platform
           </label>
           <select
             value={platform}
             onChange={(e) => setPlatform(e.target.value)}
-            style={{ ...inputStyle, minWidth: '140px' }}
+            style={{ ...inputStyle, minWidth: '120px' }}
           >
             {PLATFORMS.map((p) => (
               <option key={p.value} value={p.value}>
@@ -128,10 +120,8 @@ export default function PostForm({ projectId, onSuccess }: PostFormProps) {
           </select>
         </div>
 
-        <div style={{ flex: 1, minWidth: '200px' }}>
-          <label
-            style={{ display: 'block', marginBottom: '0.25rem', color: '#94a3b8', fontSize: '0.75rem' }}
-          >
+        <div style={{ flex: 1, minWidth: '180px' }}>
+          <label style={{ display: 'block', marginBottom: '2px', color: 'var(--text-secondary)', fontSize: '11px' }}>
             URL
           </label>
           <input
@@ -147,18 +137,15 @@ export default function PostForm({ projectId, onSuccess }: PostFormProps) {
         <button
           type="submit"
           disabled={loading}
+          className="btn btn-primary"
           style={{
-            background: loading ? '#475569' : '#10b981',
-            color: 'white',
-            padding: '0.5rem 1rem',
-            border: 'none',
-            borderRadius: '0.25rem',
-            fontSize: '0.875rem',
+            padding: '4px 12px',
+            fontSize: '13px',
+            opacity: loading ? 0.6 : 1,
             cursor: loading ? 'not-allowed' : 'pointer',
-            whiteSpace: 'nowrap',
           }}
         >
-          {loading ? 'Adding...' : 'Add Post'}
+          {loading ? 'Adding...' : 'Add'}
         </button>
       </div>
     </form>

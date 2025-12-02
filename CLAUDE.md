@@ -45,7 +45,7 @@
 ### プライバシー重視
 
 - 個人情報（メールアドレス、GitHubユーザー名等）は**保存しない**
-- `owner_id`はCloudflare Accessのsubject ID（ハッシュ済み）
+- `owner_id`はメールアドレスのSHA-256ハッシュ（同じメールなら常に同じID）
 - アバターはGitHubから取得せず、パワプロ風キャラを自動生成（予定）
 - ユーザーは任意でアバターをカスタマイズ可能（予定）
 
@@ -150,7 +150,7 @@
 -- projects: owner_id追加、is_public追加
 CREATE TABLE projects (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  owner_id TEXT NOT NULL,       -- Cloudflare Access subject ID (ハッシュ済み)
+  owner_id TEXT NOT NULL,       -- メールアドレスのSHA-256ハッシュ
   name TEXT NOT NULL,
   github_url TEXT,
   is_public INTEGER DEFAULT 0,  -- 1 = 公開ダッシュボード

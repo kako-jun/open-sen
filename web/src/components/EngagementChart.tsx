@@ -15,6 +15,7 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:8787';
 interface Project {
   id: number;
   name: string;
+  owner_id: string;
   github_url: string | null;
   posts: Post[];
 }
@@ -47,27 +48,69 @@ interface EngagementData {
   posts: PostEngagement[];
 }
 
-// Encouraging messages when engagement is low
-const encouragements = [
-  "まだ始まったばかり。継続は力なり！",
-  "最初の1いいねが来るまでが長いんだ",
-  "良いものは必ず見つけてもらえる",
-  "今日投稿しなかった人より前にいる",
-  "バズらなくても、誰かの役に立ってる",
-];
 
-// GitHub-like star icon
+// GitHub-like icons using Font Awesome
 const StarIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="#e3b341">
-    <path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.751.751 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z"/>
-  </svg>
+  <i className="fa-solid fa-star" style={{ fontSize: '12px', color: '#e3b341' }}></i>
 );
 
 const ForkIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="#8b949e">
-    <path d="M5 5.372v.878c0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75v-.878a2.25 2.25 0 1 1 1.5 0v.878a2.25 2.25 0 0 1-2.25 2.25h-1.5v2.128a2.251 2.251 0 1 1-1.5 0V8.5h-1.5A2.25 2.25 0 0 1 3.5 6.25v-.878a2.25 2.25 0 1 1 1.5 0ZM5 3.25a.75.75 0 1 0-1.5 0 .75.75 0 0 0 1.5 0Zm6.75.75a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm-3 8.75a.75.75 0 1 0-1.5 0 .75.75 0 0 0 1.5 0Z"/>
-  </svg>
+  <i className="fa-solid fa-code-fork" style={{ fontSize: '12px', color: 'var(--text-secondary)' }}></i>
 );
+
+// グラフの色を傾向で決定（上昇:緑、下降:青、横ばい:グレー）
+function getTrendColor(data: number[]): string {
+  if (!data || data.length < 2) return 'var(--text-muted)';
+  const first = data[0];
+  const last = data[data.length - 1];
+  const diff = last - first;
+  const threshold = Math.max(first * 0.05, 1); // 5%以上の変化で傾向判定
+  if (diff > threshold) return '#22c55e'; // 上昇 - 緑
+  if (diff < -threshold) return '#3b82f6'; // 下降 - 青
+  return '#8b949e'; // 横ばい - グレー
+}
+
+// Mini sparkline chart (SVG) - same as ProductGrid
+function MiniChart({ data, color }: { data: number[]; color?: string }) {
+  if (!data || data.length < 2) return null;
+
+  const chartColor = color || getTrendColor(data);
+  const width = 60;
+  const height = 20;
+  const max = Math.max(...data, 1);
+  const min = Math.min(...data, 0);
+  const range = max - min || 1;
+
+  const points = data.map((v, i) => {
+    const x = (i / (data.length - 1)) * width;
+    const y = height - ((v - min) / range) * height;
+    return `${x},${y}`;
+  }).join(' ');
+
+  return (
+    <svg width={width} height={height} style={{ display: 'block', flexShrink: 0 }}>
+      <polyline
+        points={points}
+        fill="none"
+        stroke={chartColor}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+// URL短縮表示
+const shortenUrl = (url: string) => {
+  try {
+    const u = new URL(url);
+    const path = u.pathname.length > 30 ? u.pathname.substring(0, 30) + '…' : u.pathname;
+    return u.hostname + path;
+  } catch {
+    return url.length > 40 ? url.substring(0, 40) + '…' : url;
+  }
+};
 
 export default function EngagementChart({ projectId }: { projectId: string }) {
   const [project, setProject] = useState<Project | null>(null);
@@ -92,154 +135,106 @@ export default function EngagementChart({ projectId }: { projectId: string }) {
   }, [projectId]);
 
   if (loading) {
-    return <div style={{ color: '#8b949e', padding: '16px' }}>Loading...</div>;
+    return <div style={{ color: 'var(--text-secondary)', padding: '12px' }}>Loading...</div>;
   }
 
   if (error) {
-    return <div style={{ color: '#f85149', padding: '16px' }}>Error: {error}</div>;
+    return <div style={{ color: 'var(--accent-secondary)', padding: '12px' }}>Error: {error}</div>;
   }
 
   if (!project) {
-    return <div style={{ color: '#f85149', padding: '16px' }}>Project not found</div>;
+    return <div style={{ color: 'var(--accent-secondary)', padding: '12px' }}>Project not found</div>;
   }
 
   const latestGithub = engagements?.github?.[engagements.github.length - 1];
-  const hasLowEngagement = !latestGithub || latestGithub.stars < 10;
-  const randomEncouragement = encouragements[Math.floor(Math.random() * encouragements.length)];
 
   return (
     <div>
-      {/* Project Header - GitHub style */}
-      <div style={{ marginBottom: '16px' }}>
-        <h1 style={{
-          fontSize: '26px',
-          fontWeight: 600,
-          color: '#e6edf3',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-        }}>
-          <svg width="20" height="20" viewBox="0 0 16 16" fill="#8b949e">
-            <path d="M2 2.5A2.5 2.5 0 0 1 4.5 0h8.75a.75.75 0 0 1 .75.75v12.5a.75.75 0 0 1-.75.75h-2.5a.75.75 0 0 1 0-1.5h1.75v-2h-8a1 1 0 0 0-.714 1.7.75.75 0 1 1-1.072 1.05A2.495 2.495 0 0 1 2 11.5Zm10.5-1h-8a1 1 0 0 0-1 1v6.708A2.486 2.486 0 0 1 4.5 9h8Z"/>
-          </svg>
-          {project.name}
-        </h1>
-        {project.github_url && (
+      {/* Project Header */}
+      <div style={{ marginBottom: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '18px' }}>
           <a
-            href={project.github_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ color: '#58a6ff', fontSize: '14px' }}
+            href={`/users/${project.owner_id}`}
+            style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontWeight: 500 }}
           >
-            {project.github_url}
+            {project.owner_id.substring(0, 8)}
           </a>
-        )}
+          <span style={{ color: 'var(--text-muted)' }}>/</span>
+          <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>
+            {project.name}
+          </span>
+        </div>
       </div>
 
-      {/* Stats badges - GitHub style */}
-      {latestGithub && (
-        <div style={{ display: 'flex', gap: '16px', marginBottom: '24px' }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px',
-            color: '#8b949e',
-            fontSize: '14px',
-          }}>
-            <StarIcon />
-            <span style={{ fontWeight: 600, color: '#e6edf3' }}>{latestGithub.stars}</span>
-            stars
+      {/* GitHub Section - only shown if github_url exists */}
+      {project.github_url && (
+        <div className="card" style={{ marginBottom: '12px', padding: 0 }}>
+          <div style={{ padding: '10px 12px', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <i className="fa-brands fa-github" style={{ fontSize: '16px', color: 'var(--text-primary)' }}></i>
+            <a
+              href={project.github_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: 'var(--link-color)', fontSize: '13px', flex: 1 }}
+            >
+              {project.github_url.replace('https://github.com/', '')}
+            </a>
+            {latestGithub && (
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '12px' }}>
+                  <StarIcon />
+                  <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{latestGithub.stars}</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '12px' }}>
+                  <ForkIcon />
+                  <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{latestGithub.forks}</span>
+                </div>
+              </div>
+            )}
           </div>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px',
-            color: '#8b949e',
-            fontSize: '14px',
-          }}>
-            <ForkIcon />
-            <span style={{ fontWeight: 600, color: '#e6edf3' }}>{latestGithub.forks}</span>
-            forks
-          </div>
-        </div>
-      )}
-
-      {/* Encouraging message for low engagement */}
-      {hasLowEngagement && (
-        <div style={{
-          background: 'linear-gradient(90deg, #1a472a 0%, #2d5a3d 100%)',
-          border: '1px solid #238636',
-          borderRadius: '6px',
-          padding: '12px 16px',
-          marginBottom: '24px',
-        }}>
-          <p style={{ color: '#7ee787', fontSize: '14px', margin: 0 }}>
-            {randomEncouragement}
-          </p>
-        </div>
-      )}
-
-      {/* GitHub Stars Chart */}
-      {engagements?.github && engagements.github.length > 0 && (
-        <div style={{
-          background: '#161b22',
-          border: '1px solid #30363d',
-          borderRadius: '6px',
-          marginBottom: '24px',
-        }}>
-          <div style={{
-            padding: '16px',
-            borderBottom: '1px solid #21262d',
-          }}>
-            <h2 style={{ fontSize: '16px', fontWeight: 600, color: '#e6edf3', margin: 0 }}>
-              GitHub Stats
-            </h2>
-          </div>
-          <div style={{ padding: '16px' }}>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={engagements.github}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#30363d" />
-                <XAxis dataKey="date" stroke="#8b949e" fontSize={12} />
-                <YAxis stroke="#8b949e" fontSize={12} />
-                <Tooltip
-                  contentStyle={{
-                    background: '#161b22',
-                    border: '1px solid #30363d',
-                    borderRadius: '6px',
-                  }}
-                  labelStyle={{ color: '#e6edf3' }}
-                />
-                <Legend />
-                <Line type="monotone" dataKey="stars" stroke="#e3b341" name="Stars" strokeWidth={2} />
-                <Line type="monotone" dataKey="forks" stroke="#8b949e" name="Forks" strokeWidth={2} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
+          {engagements?.github && engagements.github.length > 1 && (
+            <div style={{ padding: '12px' }}>
+              <ResponsiveContainer width="100%" height={180}>
+                <LineChart data={engagements.github}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
+                  <XAxis dataKey="date" stroke="var(--text-secondary)" fontSize={10} />
+                  <YAxis stroke="var(--text-secondary)" fontSize={10} />
+                  <Tooltip
+                    contentStyle={{
+                      background: 'var(--bg-card)',
+                      border: '1px solid var(--border-color)',
+                      borderRadius: '6px',
+                      fontSize: '11px',
+                    }}
+                    labelStyle={{ color: 'var(--text-primary)' }}
+                  />
+                  <Line type="monotone" dataKey="stars" stroke="#e3b341" name="Stars" strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="forks" stroke="var(--text-secondary)" name="Forks" strokeWidth={2} dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </div>
       )}
 
       {/* Posts */}
-      <div style={{
-        background: '#161b22',
-        border: '1px solid #30363d',
-        borderRadius: '6px',
-      }}>
+      <div className="card" style={{ padding: 0 }}>
         <div style={{
-          padding: '16px',
-          borderBottom: '1px solid #21262d',
+          padding: '10px 12px',
+          borderBottom: '1px solid var(--border-color)',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
         }}>
-          <h2 style={{ fontSize: '16px', fontWeight: 600, color: '#e6edf3', margin: 0 }}>
-            Promotion Posts
+          <h2 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
+            打席記録
           </h2>
           <span style={{
-            background: '#30363d',
-            color: '#e6edf3',
-            padding: '0 8px',
+            background: 'var(--btn-bg)',
+            color: 'var(--text-primary)',
+            padding: '0 6px',
             borderRadius: '10px',
-            fontSize: '12px',
+            fontSize: '11px',
             fontWeight: 600,
           }}>
             {project.posts?.length || 0}
@@ -247,52 +242,89 @@ export default function EngagementChart({ projectId }: { projectId: string }) {
         </div>
         <div>
           {project.posts && project.posts.length > 0 ? (
-            project.posts.map((post, index) => (
-              <div
-                key={post.id}
-                style={{
-                  padding: '12px 16px',
-                  borderBottom: index < project.posts.length - 1 ? '1px solid #21262d' : 'none',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                }}
-              >
-                <span style={{
-                  background: getPlatformColor(post.platform),
-                  color: 'white',
-                  padding: '2px 8px',
-                  borderRadius: '12px',
-                  fontSize: '12px',
-                  fontWeight: 500,
-                  textTransform: 'capitalize',
-                }}>
-                  {post.platform}
-                </span>
+            project.posts.map((post, index) => {
+              // 該当投稿の最新エンゲージメントを取得
+              const postEngagements = engagements?.posts?.filter(e => e.url === post.url) || [];
+              const latestEngagement = postEngagements[postEngagements.length - 1];
+
+              return (
                 <a
+                  key={post.id}
                   href={post.url}
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{
-                    color: '#58a6ff',
-                    fontSize: '14px',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                    flex: 1,
+                    display: 'block',
+                    padding: '10px 12px',
+                    borderBottom: index < project.posts.length - 1 ? '1px solid var(--border-color)' : 'none',
+                    textDecoration: 'none',
+                    transition: 'background 0.15s',
                   }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = 'var(--glass-bg)'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                 >
-                  {post.url}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                    <span style={{
+                      background: getPlatformConfig(post.platform).color,
+                      color: 'white',
+                      width: '22px',
+                      height: '22px',
+                      borderRadius: '4px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                    }}>
+                      <i className={getPlatformConfig(post.platform).icon} style={{ fontSize: '12px' }}></i>
+                    </span>
+                    <span style={{
+                      color: 'var(--link-color)',
+                      fontSize: '12px',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      flex: 1,
+                    }}>
+                      {shortenUrl(post.url)}
+                    </span>
+                    <span style={{ color: 'var(--text-muted)', fontSize: '10px', flexShrink: 0 }}>
+                      {new Date(post.posted_at).toLocaleDateString('ja-JP')}
+                    </span>
+                  </div>
+                  {/* Engagement stats with chart */}
+                  {postEngagements.length > 0 && (
+                    <div style={{ display: 'flex', gap: '12px', marginLeft: '30px', alignItems: 'center' }}>
+                      {latestEngagement && latestEngagement.likes > 0 && (
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '11px', color: 'var(--text-secondary)' }}>
+                          <i className="fa-solid fa-heart" style={{ color: '#f43f5e', fontSize: '10px' }}></i>
+                          {latestEngagement.likes}
+                        </span>
+                      )}
+                      {latestEngagement && latestEngagement.comments > 0 && (
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '11px', color: 'var(--text-secondary)' }}>
+                          <i className="fa-solid fa-comment" style={{ fontSize: '10px' }}></i>
+                          {latestEngagement.comments}
+                        </span>
+                      )}
+                      {latestEngagement && latestEngagement.shares > 0 && (
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '11px', color: 'var(--text-secondary)' }}>
+                          <i className="fa-solid fa-share" style={{ fontSize: '10px' }}></i>
+                          {latestEngagement.shares}
+                        </span>
+                      )}
+                      {/* Engagement trend chart */}
+                      {postEngagements.length >= 2 && (
+                        <MiniChart data={postEngagements.map(e => e.likes + e.comments)} />
+                      )}
+                    </div>
+                  )}
                 </a>
-                <span style={{ color: '#8b949e', fontSize: '12px' }}>
-                  {new Date(post.posted_at).toLocaleDateString('ja-JP')}
-                </span>
-              </div>
-            ))
+              );
+            })
           ) : (
-            <div style={{ padding: '32px 16px', textAlign: 'center' }}>
-              <p style={{ color: '#8b949e', fontSize: '14px', margin: 0 }}>
-                まだ投稿がありません。下のフォームから追加しよう！
+            <div style={{ padding: '20px 12px', textAlign: 'center' }}>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '13px', margin: 0 }}>
+                まだ投稿がありません
               </p>
             </div>
           )}
@@ -302,21 +334,21 @@ export default function EngagementChart({ projectId }: { projectId: string }) {
   );
 }
 
-function getPlatformColor(platform: string): string {
-  const colors: Record<string, string> = {
-    // Developer platforms
-    zenn: '#3ea8ff',
-    qiita: '#55c500',
-    reddit: '#ff4500',
-    github: '#238636',
-    // General platforms
-    note: '#41c9b4',
-    x: '#1d9bf0',
-    instagram: '#e4405f',
-    youtube: '#ff0000',
-    tiktok: '#000000',
-    facebook: '#1877f2',
-    threads: '#000000',
-  };
-  return colors[platform] || '#6e7681';
+// Platform config (color + Font Awesome icon class)
+const platformConfig: Record<string, { color: string; icon: string }> = {
+  zenn: { color: '#3ea8ff', icon: 'fa-solid fa-z' },
+  qiita: { color: '#55c500', icon: 'fa-solid fa-q' },
+  reddit: { color: '#ff4500', icon: 'fa-brands fa-reddit-alien' },
+  github: { color: '#333333', icon: 'fa-brands fa-github' },
+  note: { color: '#41c9b4', icon: 'fa-solid fa-n' },
+  x: { color: '#000000', icon: 'fa-brands fa-x-twitter' },
+  instagram: { color: '#e4405f', icon: 'fa-brands fa-instagram' },
+  youtube: { color: '#ff0000', icon: 'fa-brands fa-youtube' },
+  tiktok: { color: '#000000', icon: 'fa-brands fa-tiktok' },
+  facebook: { color: '#1877f2', icon: 'fa-brands fa-facebook' },
+  threads: { color: '#000000', icon: 'fa-brands fa-threads' },
+};
+
+function getPlatformConfig(platform: string) {
+  return platformConfig[platform] || { color: '#6e7681', icon: 'fa-solid fa-link' };
 }
