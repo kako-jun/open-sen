@@ -7,13 +7,13 @@ interface PostFormProps {
   onSuccess?: () => void;
 }
 
+// Platform support status (auto-fetch = engagement data can be fetched automatically)
 const PLATFORMS = [
-  { value: 'zenn', label: 'Zenn', color: '#3ea8ff' },
-  { value: 'qiita', label: 'Qiita', color: '#55c500' },
-  { value: 'note', label: 'Note', color: '#41c9b4' },
-  { value: 'x', label: 'X (Twitter)', color: '#000000' },
-  { value: 'reddit', label: 'Reddit', color: '#ff4500' },
-  { value: 'github', label: 'GitHub Discussions', color: '#333333' },
+  { value: 'zenn', label: 'Zenn', color: '#3ea8ff', autoFetch: true },
+  { value: 'qiita', label: 'Qiita', color: '#55c500', autoFetch: true },
+  { value: 'note', label: 'Note', color: '#41c9b4', autoFetch: true },
+  { value: 'reddit', label: 'Reddit', color: '#ff4500', autoFetch: true },
+  { value: 'x', label: 'X (Twitter)', color: '#000000', autoFetch: false }, // Requires paid API
 ];
 
 export default function PostForm({ projectId, onSuccess }: PostFormProps) {
@@ -107,11 +107,11 @@ export default function PostForm({ projectId, onSuccess }: PostFormProps) {
           <select
             value={platform}
             onChange={(e) => setPlatform(e.target.value)}
-            style={{ ...inputStyle, minWidth: '120px' }}
+            style={{ ...inputStyle, minWidth: '140px' }}
           >
             {PLATFORMS.map((p) => (
               <option key={p.value} value={p.value}>
-                {p.label}
+                {p.label}{!p.autoFetch ? ' (手動)' : ''}
               </option>
             ))}
           </select>
