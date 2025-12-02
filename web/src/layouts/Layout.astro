@@ -31,17 +31,52 @@ const encouragements = [
   "継続は力なり",
   "塵も積もれば山となる",
   "蒔かぬ種は生えぬ",
-  // 世界のことわざ
-  "Fall seven times, stand up eight (日本)",
-  "A journey of a thousand miles begins with a single step (中国)",
-  "The only real failure is the failure to try (英語圏)",
-  "He who never made a mistake never made anything (英語圏)",
+  // 世界のことわざ - ヨーロッパ
   "Petit à petit, l'oiseau fait son nid (仏: 少しずつ鳥は巣を作る)",
   "Chi non risica non rosica (伊: 危険を冒さねば何も得られない)",
   "Wer nicht wagt, der nicht gewinnt (独: 挑戦しなければ勝てない)",
   "El que no arriesga no gana (西: 冒険しない者は勝てない)",
   "Без труда не выловишь и рыбку из пруда (露: 労せずして池の魚は獲れない)",
+  "Övning ger färdighet (スウェーデン: 練習が技を生む)",
+  "Stap voor stap komt men ver (蘭: 一歩一歩で遠くへ行ける)",
+  "Kto nie ryzykuje, ten nie pije szampana (ポーランド: 挑戦しない者にシャンパンはない)",
+  "Pico a pico fai a pega o niño (ガリシア: くちばし一つで巣を作る)",
+  "Cine nu riscă nu câștigă (ルーマニア: 冒険しない者は得られない)",
+  // アジア
   "不怕慢，就怕站 (中: 遅れを恐れるな、止まることを恐れよ)",
+  "천 리 길도 한 걸음부터 (韓: 千里の道も一歩から)",
+  "ช้าๆ ได้พร้าเล่มงาม (タイ: ゆっくりやれば美しい鉈が得られる)",
+  "Có công mài sắt, có ngày nên kim (ベトナム: 鉄を研げばいつか針になる)",
+  "Sedikit-sedikit, lama-lama menjadi bukit (インドネシア: 少しずつで山になる)",
+  "अभ्यास से सिद्धि होती है (ヒンディー: 練習で達成できる)",
+  "هر که طاووس خواهد جور هندوستان کشد (ペルシャ: 孔雀が欲しければインドの苦労を)",
+  "Damlaya damlaya göl olur (トルコ: 一滴一滴で湖になる)",
+  "Ağac meyvəsi ilə tanınar (アゼルバイジャン: 木は実で知られる)",
+  "Хүн болох багаасаа (モンゴル: 人は若いうちから)",
+  // アフリカ
+  "Haraka haraka haina baraka (スワヒリ: 急ぎすぎると祝福がない)",
+  "Kidole kimoja hakivunji chawa (スワヒリ: 一本の指ではシラミも潰せない)",
+  "Mbio za sakafuni huishia ukingoni (スワヒリ: 台所を走れば縁で終わる)",
+  "Nnukwu osisi anaghi epu n'otu ụbọchị (イボ: 大きな木は一日では育たない)",
+  "Dɛn dɛn fɔ kech di mɔnki (クリオ: 猿を捕まえるには騙さねば)",
+  "Ubuntu ngumuntu ngabantu (ズールー: 人は人によって人となる)",
+  "Izere vuba ntiyirirwa (ルワンダ: 急ぐ者は遅れる)",
+  "N'tomikofe ko n'tomive (エウェ: 失敗しなければ学べない)",
+  "Wäla yəsäw bämirkut ayattafam (アムハラ: 働く者の足は泥に沈まない)",
+  // 中東・その他
+  "אם אין אני לי מי לי (ヘブライ: 自分のためにならなければ誰がなる)",
+  "القطرة تثقب الصخرة (アラビア: 一滴が岩を穿つ)",
+  "بذر بکار تا درو کنی (ペルシャ: 蒔けば刈り取れる)",
+  // 中南米・先住民
+  "Caminante, no hay camino, se hace camino al andar (西: 歩く者よ、道はない、歩いて作る)",
+  "In lak'ech (マヤ: あなたは私の別の自分)",
+  "Ama sua, ama llulla, ama quella (ケチュア: 盗むな、嘘つくな、怠けるな)",
+  // オセアニア
+  "He aha te mea nui o te ao? He tangata! (マオリ: 世界で最も大切なものは？人だ！)",
+  "E kore e taea te whenu kotahi ki te raranga (マオリ: 一本の藁では編めない)",
+  // 英語圏
+  "The only real failure is the failure to try",
+  "He who never made a mistake never made anything",
   "Practice makes perfect",
   "Rome wasn't built in a day",
   "Every master was once a disaster",
@@ -276,6 +311,7 @@ const randomMessage = encouragements[Math.floor(Math.random() * encouragements.l
           <i class="fa-solid fa-baseball" style="font-size: 20px;"></i>
           open-sen
         </a>
+        <a href="/about" style="font-size: 12px; color: var(--text-muted);">About</a>
         <div style="margin-left: auto; display: flex; gap: 8px; align-items: center;">
           <!-- Theme toggle button -->
           <button class="theme-toggle" id="theme-toggle" title="テーマ切り替え">

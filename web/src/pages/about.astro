@@ -1,0 +1,85 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="About">
+  <div style="max-width: 600px; margin: 0 auto;">
+    <div style="margin-bottom: 8px;">
+      <a href="/" style="color: var(--text-secondary); font-size: 12px;">← トップに戻る</a>
+    </div>
+
+    <div class="card" style="padding: 20px;">
+      <!-- About -->
+      <div style="margin-bottom: 20px;">
+        <h1 style="font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+          <i class="fa-solid fa-baseball"></i>
+          open-sen とは？
+        </h1>
+        <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.7; margin: 0;">
+          プロモーション活動を記録・可視化するダッシュボード。<br><br>
+          OSS開発者、個人開発者、ラーメン屋、YouTuber…<br>
+          <strong style="color: var(--text-primary);">何かを世に出す人</strong>のためのプロモーション記録ツール。
+        </p>
+      </div>
+
+      <!-- Name origin -->
+      <div style="margin-bottom: 20px;">
+        <h2 style="font-size: 15px; font-weight: 600; color: var(--text-primary); margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+          <i class="fa-solid fa-lightbulb"></i>
+          名前の由来
+        </h2>
+        <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.7; margin: 0;">
+          野球の「オープン戦」にかけて：<br><br>
+          <strong style="color: var(--accent-primary);">オープン宣伝</strong> - プロモーション状況をオープンに晒す<br>
+          <strong style="color: var(--accent-primary);">オープン戦</strong> - 有名になれるかの戦いの始まり
+        </p>
+      </div>
+
+      <!-- How to use -->
+      <div style="margin-bottom: 20px;">
+        <h2 style="font-size: 15px; font-weight: 600; color: var(--text-primary); margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+          <i class="fa-solid fa-circle-question"></i>
+          使い方
+        </h2>
+        <ol style="font-size: 13px; color: var(--text-secondary); line-height: 1.8; margin: 0; padding-left: 20px;">
+          <li>メール認証でサインイン</li>
+          <li>プロダクト（プロモーション対象）を登録</li>
+          <li>SNS投稿のURLを追加</li>
+          <li>毎日自動でエンゲージメントを取得</li>
+        </ol>
+      </div>
+
+      <!-- Supported platforms -->
+      <div style="margin-bottom: 20px;">
+        <h2 style="font-size: 15px; font-weight: 600; color: var(--text-primary); margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+          <i class="fa-solid fa-chart-line"></i>
+          対応プラットフォーム
+        </h2>
+        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">自動取得</p>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
+          <span class="btn" style="font-size: 11px; padding: 4px 10px;"><i class="fa-brands fa-github"></i> GitHub</span>
+          <span class="btn" style="font-size: 11px; padding: 4px 10px;"><i class="fa-solid fa-z"></i> Zenn</span>
+          <span class="btn" style="font-size: 11px; padding: 4px 10px;"><i class="fa-solid fa-q"></i> Qiita</span>
+          <span class="btn" style="font-size: 11px; padding: 4px 10px;"><i class="fa-solid fa-n"></i> Note</span>
+          <span class="btn" style="font-size: 11px; padding: 4px 10px;"><i class="fa-brands fa-reddit-alien"></i> Reddit</span>
+        </div>
+        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">手動入力（認証が必要なため）</p>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+          <span class="btn" style="font-size: 11px; padding: 4px 10px;"><i class="fa-brands fa-x-twitter"></i> X</span>
+          <span class="btn" style="font-size: 11px; padding: 4px 10px;"><i class="fa-brands fa-instagram"></i> Instagram</span>
+          <span class="btn" style="font-size: 11px; padding: 4px 10px;"><i class="fa-brands fa-youtube"></i> YouTube</span>
+          <span class="btn" style="font-size: 11px; padding: 4px 10px;"><i class="fa-brands fa-tiktok"></i> TikTok</span>
+          <span class="btn" style="font-size: 11px; padding: 4px 10px;"><i class="fa-brands fa-facebook"></i> Facebook</span>
+        </div>
+      </div>
+
+      <!-- Links -->
+      <div style="padding-top: 16px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end;">
+        <a href="https://github.com/kako-jun/open-sen" target="_blank" rel="noopener noreferrer" style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-muted);">
+          <i class="fa-brands fa-github"></i>
+          open-sen on GitHub
+        </a>
+      </div>
+    </div>
+  </div>
+</Layout>

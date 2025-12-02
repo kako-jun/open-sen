@@ -1,0 +1,36 @@
+---
+import Layout from '../layouts/Layout.astro';
+import ProjectList from '../components/ProjectList';
+
+const cfAuth = Astro.cookies.get('CF_Authorization')?.value;
+const isLoggedIn = !!cfAuth;
+---
+
+<Layout title="ダッシュボード">
+  {isLoggedIn ? (
+    <div>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <h1 style="font-size: 18px; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+          <i class="fa-solid fa-gauge"></i>
+          マイプロジェクト
+        </h1>
+        <a href="/projects/new" class="btn btn-primary" style="text-decoration: none; display: flex; align-items: center; gap: 4px;">
+          <i class="fa-solid fa-plus"></i>
+          新規作成
+        </a>
+      </div>
+      <ProjectList client:load isLoggedIn={true} />
+    </div>
+  ) : (
+    <div class="card" style="text-align: center; padding: 32px 12px;">
+      <i class="fa-solid fa-user" style="font-size: 48px; color: var(--text-muted); margin-bottom: 12px; display: block;"></i>
+      <h2 style="font-size: 18px; color: var(--text-primary); margin-bottom: 8px;">サインインが必要です</h2>
+      <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 16px;">
+        プロジェクトを追加・管理するにはサインインしてください
+      </p>
+      <a href="/auth/login" class="btn btn-primary" style="text-decoration: none;">
+        サインイン
+      </a>
+    </div>
+  )}
+</Layout>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:8787';
 
@@ -38,7 +38,11 @@ interface Project {
 
 interface ProductGridProps {
   ownerId?: string;
+  limit?: number;
+  infiniteScroll?: boolean;
 }
+
+const ITEMS_PER_PAGE = 12;
 
 // Platform config (color + Font Awesome icon class)
 const platformConfig: Record<string, { color: string; icon: string }> = {
@@ -109,10 +113,58 @@ function MiniChart({ data, color }: { data: number[]; color?: string }) {
   );
 }
 
-export default function ProductGrid({ ownerId }: ProductGridProps) {
-  const [projects, setProjects] = useState<Project[]>([]);
+export default function ProductGrid({ ownerId, limit, infiniteScroll = false }: ProductGridProps) {
+  const [allProjects, setAllProjects] = useState<Project[]>([]);
+  const [displayedProjects, setDisplayedProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(true);
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
+
+  // 追加読み込み
+  const loadMore = useCallback(() => {
+    if (loadingMore || !hasMore) return;
+
+    setLoadingMore(true);
+    const currentCount = displayedProjects.length;
+    const nextProjects = allProjects.slice(currentCount, currentCount + ITEMS_PER_PAGE);
+
+    if (nextProjects.length > 0) {
+      setDisplayedProjects(prev => [...prev, ...nextProjects]);
+    }
+
+    if (currentCount + nextProjects.length >= allProjects.length) {
+      setHasMore(false);
+    }
+
+    setLoadingMore(false);
+  }, [allProjects, displayedProjects.length, hasMore, loadingMore]);
+
+  // Intersection Observer for infinite scroll
+  useEffect(() => {
+    if (!infiniteScroll || !hasMore) return;
+
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loadingMore) {
+          loadMore();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (loadMoreRef.current) {
+      observerRef.current.observe(loadMoreRef.current);
+    }
+
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+    };
+  }, [infiniteScroll, hasMore, loadingMore, loadMore]);
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -151,7 +203,18 @@ export default function ProductGrid({ ownerId }: ProductGridProps) {
           return getLatestDate(b) - getLatestDate(a);
         });
 
-        setProjects(sortedProjects);
+        // Apply limit if specified (non-infinite mode)
+        if (limit && !infiniteScroll) {
+          setAllProjects(sortedProjects.slice(0, limit));
+          setDisplayedProjects(sortedProjects.slice(0, limit));
+          setHasMore(false);
+        } else {
+          setAllProjects(sortedProjects);
+          // 初回表示分
+          const initialProjects = sortedProjects.slice(0, ITEMS_PER_PAGE);
+          setDisplayedProjects(initialProjects);
+          setHasMore(sortedProjects.length > ITEMS_PER_PAGE);
+        }
         setLoading(false);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown error');
@@ -160,7 +223,9 @@ export default function ProductGrid({ ownerId }: ProductGridProps) {
     };
 
     fetchProjects();
-  }, [ownerId]);
+  }, [ownerId, limit, infiniteScroll]);
+
+  const projects = displayedProjects;
 
   if (loading) {
     return <div style={{ color: 'var(--text-secondary)', padding: '8px', fontSize: '12px' }}>Loading...</div>;
@@ -381,6 +446,23 @@ export default function ProductGrid({ ownerId }: ProductGridProps) {
           </div>
         );
       })}
+
+      {/* Infinite scroll trigger */}
+      {infiniteScroll && (
+        <div ref={loadMoreRef} style={{ padding: '20px', textAlign: 'center' }}>
+          {loadingMore && (
+            <span style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>
+              <i className="fa-solid fa-spinner fa-spin" style={{ marginRight: '6px' }}></i>
+              読み込み中...
+            </span>
+          )}
+          {!hasMore && allProjects.length > 0 && (
+            <span style={{ color: 'var(--text-muted)', fontSize: '11px' }}>
+              すべてのプロジェクトを表示しました
+            </span>
+          )}
+        </div>
+      )}
     </div>
   );
 }

@@ -227,7 +227,7 @@ export default function EngagementChart({ projectId }: { projectId: string }) {
           alignItems: 'center',
         }}>
           <h2 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
-            打席記録
+            スイング記録
           </h2>
           <span style={{
             background: 'var(--btn-bg)',
@@ -247,23 +247,37 @@ export default function EngagementChart({ projectId }: { projectId: string }) {
               const postEngagements = engagements?.posts?.filter(e => e.url === post.url) || [];
               const latestEngagement = postEngagements[postEngagements.length - 1];
 
+              // グラフ用データを作成
+              const chartData = postEngagements.map(e => ({
+                date: e.date,
+                likes: e.likes,
+                comments: e.comments,
+                shares: e.shares,
+              }));
+
               return (
-                <a
+                <div
                   key={post.id}
-                  href={post.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
                   style={{
-                    display: 'block',
-                    padding: '10px 12px',
                     borderBottom: index < project.posts.length - 1 ? '1px solid var(--border-color)' : 'none',
-                    textDecoration: 'none',
-                    transition: 'background 0.15s',
                   }}
-                  onMouseEnter={(e) => e.currentTarget.style.background = 'var(--glass-bg)'}
-                  onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                  {/* Post header */}
+                  <a
+                    href={post.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '10px 12px',
+                      textDecoration: 'none',
+                      transition: 'background 0.15s',
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = 'var(--glass-bg)'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                  >
                     <span style={{
                       background: getPlatformConfig(post.platform).color,
                       color: 'white',
@@ -287,38 +301,56 @@ export default function EngagementChart({ projectId }: { projectId: string }) {
                     }}>
                       {shortenUrl(post.url)}
                     </span>
+                    {latestEngagement && (
+                      <div style={{ display: 'flex', gap: '10px', flexShrink: 0 }}>
+                        {latestEngagement.likes > 0 && (
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '11px', color: 'var(--text-secondary)' }}>
+                            <i className="fa-solid fa-heart" style={{ color: '#f43f5e', fontSize: '10px' }}></i>
+                            {latestEngagement.likes}
+                          </span>
+                        )}
+                        {latestEngagement.comments > 0 && (
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '11px', color: 'var(--text-secondary)' }}>
+                            <i className="fa-solid fa-comment" style={{ fontSize: '10px' }}></i>
+                            {latestEngagement.comments}
+                          </span>
+                        )}
+                        {latestEngagement.shares > 0 && (
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '11px', color: 'var(--text-secondary)' }}>
+                            <i className="fa-solid fa-share" style={{ fontSize: '10px' }}></i>
+                            {latestEngagement.shares}
+                          </span>
+                        )}
+                      </div>
+                    )}
                     <span style={{ color: 'var(--text-muted)', fontSize: '10px', flexShrink: 0 }}>
-                      {new Date(post.posted_at).toLocaleDateString('ja-JP')}
+                      投稿 {post.posted_at.split('T')[0]}
                     </span>
-                  </div>
-                  {/* Engagement stats with chart */}
-                  {postEngagements.length > 0 && (
-                    <div style={{ display: 'flex', gap: '12px', marginLeft: '30px', alignItems: 'center' }}>
-                      {latestEngagement && latestEngagement.likes > 0 && (
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '11px', color: 'var(--text-secondary)' }}>
-                          <i className="fa-solid fa-heart" style={{ color: '#f43f5e', fontSize: '10px' }}></i>
-                          {latestEngagement.likes}
-                        </span>
-                      )}
-                      {latestEngagement && latestEngagement.comments > 0 && (
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '11px', color: 'var(--text-secondary)' }}>
-                          <i className="fa-solid fa-comment" style={{ fontSize: '10px' }}></i>
-                          {latestEngagement.comments}
-                        </span>
-                      )}
-                      {latestEngagement && latestEngagement.shares > 0 && (
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '11px', color: 'var(--text-secondary)' }}>
-                          <i className="fa-solid fa-share" style={{ fontSize: '10px' }}></i>
-                          {latestEngagement.shares}
-                        </span>
-                      )}
-                      {/* Engagement trend chart */}
-                      {postEngagements.length >= 2 && (
-                        <MiniChart data={postEngagements.map(e => e.likes + e.comments)} />
-                      )}
+                  </a>
+                  {/* Engagement chart - same size as GitHub */}
+                  {chartData.length > 1 && (
+                    <div style={{ padding: '0 12px 12px' }}>
+                      <ResponsiveContainer width="100%" height={140}>
+                        <LineChart data={chartData}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
+                          <XAxis dataKey="date" stroke="var(--text-secondary)" fontSize={10} />
+                          <YAxis stroke="var(--text-secondary)" fontSize={10} />
+                          <Tooltip
+                            contentStyle={{
+                              background: 'var(--bg-card)',
+                              border: '1px solid var(--border-color)',
+                              borderRadius: '6px',
+                              fontSize: '11px',
+                            }}
+                            labelStyle={{ color: 'var(--text-primary)' }}
+                          />
+                          <Line type="monotone" dataKey="likes" stroke="#f43f5e" name="Likes" strokeWidth={2} dot={false} />
+                          <Line type="monotone" dataKey="comments" stroke="#3b82f6" name="Comments" strokeWidth={2} dot={false} />
+                        </LineChart>
+                      </ResponsiveContainer>
                     </div>
                   )}
-                </a>
+                </div>
               );
             })
           ) : (
