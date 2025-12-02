@@ -4,6 +4,16 @@ interface Props {
 }
 
 const { title } = Astro.props;
+
+// Encouraging messages for the baseball theme
+const encouragements = [
+  "Play ball! 今日も打席に立とう",
+  "三振を恐れるな、バットを振れ",
+  "ファウルも立派な粘り",
+  "全打席ホームランの選手はいない",
+  "次の一球に集中",
+];
+const randomMessage = encouragements[Math.floor(Math.random() * encouragements.length)];
 ---
 
 <!doctype html>
@@ -20,31 +30,99 @@ const { title } = Astro.props;
         box-sizing: border-box;
       }
       body {
-        font-family: system-ui, sans-serif;
-        background: #0f172a;
-        color: #e2e8f0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+        background: #0d1117;
+        color: #e6edf3;
         min-height: 100vh;
+        line-height: 1.5;
       }
       a {
-        color: #60a5fa;
+        color: #58a6ff;
         text-decoration: none;
       }
       a:hover {
         text-decoration: underline;
       }
+      /* GitHub-like styling */
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 5px 16px;
+        font-size: 14px;
+        font-weight: 500;
+        line-height: 20px;
+        border-radius: 6px;
+        border: 1px solid rgba(240, 246, 252, 0.1);
+        background-color: #21262d;
+        color: #c9d1d9;
+        cursor: pointer;
+        transition: 0.2s;
+      }
+      .btn:hover {
+        background-color: #30363d;
+        border-color: #8b949e;
+        text-decoration: none;
+      }
+      .btn-primary {
+        background-color: #238636;
+        border-color: rgba(240, 246, 252, 0.1);
+        color: #ffffff;
+      }
+      .btn-primary:hover {
+        background-color: #2ea043;
+      }
+      /* Card styling */
+      .card {
+        background: #161b22;
+        border: 1px solid #30363d;
+        border-radius: 6px;
+        padding: 16px;
+      }
     </style>
   </head>
   <body>
-    <header style="padding: 1rem 2rem; border-bottom: 1px solid #334155;">
-      <nav style="display: flex; gap: 2rem; align-items: center;">
-        <a href="/" style="font-size: 1.5rem; font-weight: bold; color: #f8fafc;">
+    <!-- Baseball-themed encouragement banner -->
+    <div style="background: linear-gradient(90deg, #1a472a 0%, #2d5a3d 50%, #1a472a 100%); padding: 8px 16px; text-align: center; border-bottom: 3px solid #238636;">
+      <span style="color: #7ee787; font-size: 14px; font-weight: 500;">
+        {randomMessage}
+      </span>
+    </div>
+
+    <!-- GitHub-like header -->
+    <header style="background: #161b22; padding: 16px 32px; border-bottom: 1px solid #30363d;">
+      <nav style="display: flex; gap: 24px; align-items: center; max-width: 1280px; margin: 0 auto;">
+        <a href="/" style="display: flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 600; color: #e6edf3;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M12 6v6l4 2"/>
+          </svg>
           open-sen
         </a>
-        <a href="/projects">Projects</a>
+        <div style="display: flex; gap: 16px; font-size: 14px;">
+          <a href="/projects" style="color: #e6edf3; padding: 4px 8px; border-radius: 6px;">Projects</a>
+        </div>
+        <div style="margin-left: auto;">
+          <a href="/projects/new" class="btn btn-primary">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M7.75 2a.75.75 0 0 1 .75.75V7h4.25a.75.75 0 0 1 0 1.5H8.5v4.25a.75.75 0 0 1-1.5 0V8.5H2.75a.75.75 0 0 1 0-1.5H7V2.75A.75.75 0 0 1 7.75 2Z"/>
+            </svg>
+            New Project
+          </a>
+        </div>
       </nav>
     </header>
-    <main style="padding: 2rem; max-width: 1200px; margin: 0 auto;">
+
+    <main style="padding: 24px 32px; max-width: 1280px; margin: 0 auto;">
       <slot />
     </main>
+
+    <!-- Footer -->
+    <footer style="padding: 40px 32px; border-top: 1px solid #30363d; margin-top: 40px;">
+      <div style="max-width: 1280px; margin: 0 auto; text-align: center; color: #8b949e; font-size: 12px;">
+        <p>open-sen - OSSプロモーション活動を記録・可視化するダッシュボード</p>
+        <p style="margin-top: 8px;">さぁ、次の打席に立て！</p>
+      </div>
+    </footer>
   </body>
 </html>

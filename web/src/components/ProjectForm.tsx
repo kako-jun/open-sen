@@ -32,76 +32,110 @@ export default function ProjectForm() {
     }
   };
 
-  const inputStyle = {
+  const inputStyle: React.CSSProperties = {
     width: '100%',
-    padding: '0.75rem',
-    background: '#1e293b',
-    border: '1px solid #334155',
-    borderRadius: '0.25rem',
-    color: '#f8fafc',
-    fontSize: '1rem',
+    padding: '5px 12px',
+    fontSize: '14px',
+    lineHeight: '20px',
+    color: '#e6edf3',
+    background: '#0d1117',
+    border: '1px solid #30363d',
+    borderRadius: '6px',
+    outline: 'none',
   };
 
-  const labelStyle = {
+  const labelStyle: React.CSSProperties = {
     display: 'block',
-    marginBottom: '0.5rem',
-    color: '#94a3b8',
+    marginBottom: '8px',
+    fontWeight: 600,
+    fontSize: '14px',
+    color: '#e6edf3',
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ maxWidth: '500px' }}>
+    <form onSubmit={handleSubmit} style={{ maxWidth: '600px' }}>
       {error && (
-        <div
-          style={{
-            background: '#7f1d1d',
-            color: '#fecaca',
-            padding: '1rem',
-            borderRadius: '0.25rem',
-            marginBottom: '1rem',
-          }}
-        >
+        <div style={{
+          background: '#490202',
+          border: '1px solid #f85149',
+          color: '#f85149',
+          padding: '12px 16px',
+          borderRadius: '6px',
+          marginBottom: '16px',
+          fontSize: '14px',
+        }}>
           {error}
         </div>
       )}
 
-      <div style={{ marginBottom: '1.5rem' }}>
-        <label style={labelStyle}>Project Name *</label>
-        <input
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required
-          placeholder="e.g., chunkundo.nvim"
-          style={inputStyle}
-        />
-      </div>
+      <div style={{
+        background: '#161b22',
+        border: '1px solid #30363d',
+        borderRadius: '6px',
+        padding: '16px',
+      }}>
+        <div style={{ marginBottom: '16px' }}>
+          <label style={labelStyle}>
+            Project name <span style={{ color: '#f85149' }}>*</span>
+          </label>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+            placeholder="e.g., chunkundo.nvim"
+            style={inputStyle}
+            onFocus={(e) => e.currentTarget.style.borderColor = '#58a6ff'}
+            onBlur={(e) => e.currentTarget.style.borderColor = '#30363d'}
+          />
+          <p style={{ color: '#8b949e', fontSize: '12px', marginTop: '4px' }}>
+            プロモーションするOSSプロジェクトの名前
+          </p>
+        </div>
 
-      <div style={{ marginBottom: '1.5rem' }}>
-        <label style={labelStyle}>GitHub URL</label>
-        <input
-          type="url"
-          value={githubUrl}
-          onChange={(e) => setGithubUrl(e.target.value)}
-          placeholder="https://github.com/username/repo"
-          style={inputStyle}
-        />
-      </div>
+        <div style={{ marginBottom: '16px' }}>
+          <label style={labelStyle}>GitHub URL</label>
+          <input
+            type="url"
+            value={githubUrl}
+            onChange={(e) => setGithubUrl(e.target.value)}
+            placeholder="https://github.com/username/repo"
+            style={inputStyle}
+            onFocus={(e) => e.currentTarget.style.borderColor = '#58a6ff'}
+            onBlur={(e) => e.currentTarget.style.borderColor = '#30363d'}
+          />
+          <p style={{ color: '#8b949e', fontSize: '12px', marginTop: '4px' }}>
+            GitHubリポジトリがあれば、Star数などを自動取得します
+          </p>
+        </div>
 
-      <button
-        type="submit"
-        disabled={loading}
-        style={{
-          background: loading ? '#475569' : '#3b82f6',
-          color: 'white',
-          padding: '0.75rem 1.5rem',
-          border: 'none',
-          borderRadius: '0.25rem',
-          fontSize: '1rem',
-          cursor: loading ? 'not-allowed' : 'pointer',
-        }}
-      >
-        {loading ? 'Creating...' : 'Create Project'}
-      </button>
+        <div style={{
+          borderTop: '1px solid #30363d',
+          paddingTop: '16px',
+          display: 'flex',
+          justifyContent: 'flex-end',
+          gap: '8px',
+        }}>
+          <a
+            href="/projects"
+            className="btn"
+            style={{ textDecoration: 'none' }}
+          >
+            Cancel
+          </a>
+          <button
+            type="submit"
+            disabled={loading}
+            className="btn btn-primary"
+            style={{
+              opacity: loading ? 0.6 : 1,
+              cursor: loading ? 'not-allowed' : 'pointer',
+            }}
+          >
+            {loading ? 'Creating...' : 'Create project'}
+          </button>
+        </div>
+      </div>
     </form>
   );
 }

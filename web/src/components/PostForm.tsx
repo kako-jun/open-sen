@@ -8,12 +8,22 @@ interface PostFormProps {
 }
 
 // Platform support status (auto-fetch = engagement data can be fetched automatically)
+// Divided into categories for better organization
 const PLATFORMS = [
-  { value: 'zenn', label: 'Zenn', color: '#3ea8ff', autoFetch: true },
-  { value: 'qiita', label: 'Qiita', color: '#55c500', autoFetch: true },
-  { value: 'note', label: 'Note', color: '#41c9b4', autoFetch: true },
-  { value: 'reddit', label: 'Reddit', color: '#ff4500', autoFetch: true },
-  { value: 'x', label: 'X (Twitter)', color: '#000000', autoFetch: false }, // Requires paid API
+  // Developer-focused platforms
+  { value: 'zenn', label: 'Zenn', color: '#3ea8ff', autoFetch: true, category: 'dev' },
+  { value: 'qiita', label: 'Qiita', color: '#55c500', autoFetch: true, category: 'dev' },
+  { value: 'reddit', label: 'Reddit', color: '#ff4500', autoFetch: true, category: 'dev' },
+  // General platforms (for broader audience - ramen shops, indie makers, etc.)
+  { value: 'note', label: 'Note', color: '#41c9b4', autoFetch: true, category: 'general' },
+  { value: 'x', label: 'X (Twitter)', color: '#1d9bf0', autoFetch: false, category: 'general' },
+  { value: 'instagram', label: 'Instagram', color: '#e4405f', autoFetch: false, category: 'general' },
+  { value: 'youtube', label: 'YouTube', color: '#ff0000', autoFetch: false, category: 'general' },
+  { value: 'tiktok', label: 'TikTok', color: '#000000', autoFetch: false, category: 'general' },
+  { value: 'facebook', label: 'Facebook', color: '#1877f2', autoFetch: false, category: 'general' },
+  { value: 'threads', label: 'Threads', color: '#000000', autoFetch: false, category: 'general' },
+  // Other
+  { value: 'other', label: 'Other', color: '#6e7681', autoFetch: false, category: 'other' },
 ];
 
 export default function PostForm({ projectId, onSuccess }: PostFormProps) {
