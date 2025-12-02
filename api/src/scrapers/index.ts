@@ -30,7 +30,7 @@ export async function fetchGitHubStats(repoUrl: string): Promise<GitHubStats | n
 
     if (!res.ok) return null;
 
-    const data = await res.json();
+    const data = await res.json() as { stargazers_count?: number; forks_count?: number; open_issues_count?: number };
     return {
       stars: data.stargazers_count ?? 0,
       forks: data.forks_count ?? 0,
@@ -58,7 +58,7 @@ export async function fetchZennEngagement(url: string): Promise<EngagementData |
 
     if (!res.ok) return null;
 
-    const data = await res.json();
+    const data = await res.json() as { article?: { liked_count?: number; comments_count?: number; bookmarked_count?: number } };
     const article = data.article;
     if (!article) return null;
 
@@ -88,7 +88,7 @@ export async function fetchQiitaEngagement(url: string): Promise<EngagementData 
 
     if (!res.ok) return null;
 
-    const data = await res.json();
+    const data = await res.json() as { likes_count?: number; comments_count?: number; stocks_count?: number };
     return {
       likes: data.likes_count ?? 0,
       comments: data.comments_count ?? 0,
@@ -116,7 +116,7 @@ export async function fetchNoteEngagement(url: string): Promise<EngagementData |
 
     if (!res.ok) return null;
 
-    const data = await res.json();
+    const data = await res.json() as { data?: { likeCount?: number; commentCount?: number } };
     const note = data.data;
     if (!note) return null;
 
@@ -155,7 +155,7 @@ export async function fetchRedditEngagement(url: string): Promise<EngagementData
 
     if (!res.ok) return null;
 
-    const data = await res.json();
+    const data = await res.json() as Array<{ data?: { children?: Array<{ data?: { ups?: number; num_comments?: number } }> } }>;
     const post = data[0]?.data?.children?.[0]?.data;
     if (!post) return null;
 

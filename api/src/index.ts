@@ -1,14 +1,9 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { fetchGitHubStats, fetchEngagement } from './scrapers'
-
-type Bindings = {
-  DB: D1Database
-}
-
-type Variables = {
-  userId: string | null
-}
+import { authMiddleware, requireAuth } from './middleware/auth'
+import { getOwnedProject, getOwnedPost, getTodayDate, buildUpdateQuery } from './utils/db'
+import type { Bindings, Variables, Project, Post } from './types'
 
 const app = new Hono<{ Bindings: Bindings; Variables: Variables }>()
 
@@ -18,81 +13,17 @@ app.use('/*', cors({
   credentials: true,
 }))
 
-// Cloudflare Access認証ミドルウェア
-// Cf-Access-Jwt-Assertion、Authorization Bearer、またはCookieからユーザー情報を取得
-app.use('/*', async (c, next) => {
-  // ヘッダーからJWTを取得（優先順位: Cf-Access-Jwt-Assertion > Authorization Bearer > Cookie）
-  let cfAccessJwt = c.req.header('Cf-Access-Jwt-Assertion')
-
-  if (!cfAccessJwt) {
-    // Authorization Bearerヘッダーから取得を試みる
-    const authHeader = c.req.header('Authorization')
-    if (authHeader?.startsWith('Bearer ')) {
-      cfAccessJwt = authHeader.slice(7)
-    }
-  }
-
-  if (!cfAccessJwt) {
-    // Cookieから取得を試みる
-    const cookie = c.req.header('Cookie')
-    if (cookie) {
-      const match = cookie.match(/CF_Authorization=([^;]+)/)
-      if (match) {
-        cfAccessJwt = match[1]
-      }
-    }
-  }
-
-  if (cfAccessJwt) {
-    try {
-      // JWTをデコード（Cloudflare Accessが検証済みなので署名検証は不要）
-      const parts = cfAccessJwt.split('.')
-      if (parts.length === 3) {
-        const payload = JSON.parse(atob(parts[1]))
-        // emailをSHA-256でハッシュ化してowner_idとして使用
-        // subは認証セッションごとに変わるため、emailベースのハッシュで同一性を保証
-        if (payload.email) {
-          const encoder = new TextEncoder()
-          const data = encoder.encode(payload.email.toLowerCase())
-          const hashBuffer = await crypto.subtle.digest('SHA-256', data)
-          const hashArray = Array.from(new Uint8Array(hashBuffer))
-          const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
-          c.set('userId', hashHex)
-        } else {
-          c.set('userId', null)
-        }
-      }
-    } catch {
-      c.set('userId', null)
-    }
-  } else {
-    c.set('userId', null)
-  }
-
-  await next()
-})
-
-// 認証必須のエンドポイント用ミドルウェア
-const requireAuth = async (c: any, next: any) => {
-  const userId = c.get('userId')
-  if (!userId) {
-    return c.json({ error: 'Unauthorized' }, 401)
-  }
-  await next()
-}
+// 認証ミドルウェア
+app.use('/*', authMiddleware)
 
 // ヘルスチェック
 app.get('/', (c) => {
   return c.json({ status: 'ok', name: 'open-sen' })
 })
 
-// 全プロジェクト一覧（新着順、全て公開）
-app.get('/api/projects', async (c) => {
-  const { results } = await c.env.DB.prepare(
-    'SELECT * FROM projects ORDER BY created_at DESC'
-  ).all()
-  return c.json(results)
-})
+// ========================================
+// Users
+// ========================================
 
 // ユーザー情報取得
 app.get('/api/users/:ownerId', async (c) => {
@@ -100,6 +31,7 @@ app.get('/api/users/:ownerId', async (c) => {
   const user = await c.env.DB.prepare(
     'SELECT * FROM users WHERE id = ?'
   ).bind(ownerId).first()
+
   if (!user) {
     return c.json({ id: ownerId, bio: null, url: null })
   }
@@ -108,7 +40,7 @@ app.get('/api/users/:ownerId', async (c) => {
 
 // ユーザー情報更新（認証必須 + 本人のみ）
 app.patch('/api/users/:ownerId', requireAuth, async (c) => {
-  const userId = c.get('userId')
+  const userId = c.get('userId')!
   const ownerId = c.req.param('ownerId')
 
   if (userId !== ownerId) {
@@ -117,7 +49,6 @@ app.patch('/api/users/:ownerId', requireAuth, async (c) => {
 
   const { bio, url } = await c.req.json()
 
-  // UPSERT
   await c.env.DB.prepare(`
     INSERT INTO users (id, bio, url, updated_at)
     VALUES (?, ?, ?, CURRENT_TIMESTAMP)
@@ -139,19 +70,30 @@ app.get('/api/users/:ownerId/projects', async (c) => {
   return c.json(results)
 })
 
-// プロジェクト詳細（全て公開）
+// ========================================
+// Projects
+// ========================================
+
+// 全プロジェクト一覧（新着順）
+app.get('/api/projects', async (c) => {
+  const { results } = await c.env.DB.prepare(
+    'SELECT * FROM projects ORDER BY created_at DESC'
+  ).all()
+  return c.json(results)
+})
+
+// プロジェクト詳細
 app.get('/api/projects/:id', async (c) => {
   const id = c.req.param('id')
 
   const project = await c.env.DB.prepare(
     'SELECT * FROM projects WHERE id = ?'
-  ).bind(id).first() as any
+  ).bind(id).first() as Project | null
 
   if (!project) {
     return c.json({ error: 'Not found' }, 404)
   }
 
-  // 関連する投稿も取得
   const { results: posts } = await c.env.DB.prepare(
     'SELECT * FROM posts WHERE project_id = ? ORDER BY posted_at DESC'
   ).bind(id).all()
@@ -159,20 +101,18 @@ app.get('/api/projects/:id', async (c) => {
   return c.json({ ...project, posts })
 })
 
-// プロジェクトのエンゲージメント履歴（全て公開）
+// プロジェクトのエンゲージメント履歴
 app.get('/api/projects/:id/engagements', async (c) => {
   const id = c.req.param('id')
 
-  // プロジェクトの存在確認
   const project = await c.env.DB.prepare(
-    'SELECT * FROM projects WHERE id = ?'
-  ).bind(id).first() as any
+    'SELECT id FROM projects WHERE id = ?'
+  ).bind(id).first()
 
   if (!project) {
     return c.json({ error: 'Not found' }, 404)
   }
 
-  // GitHub stats
   const { results: githubStats } = await c.env.DB.prepare(`
     SELECT date, stars, forks, issues
     FROM github_stats
@@ -180,7 +120,6 @@ app.get('/api/projects/:id/engagements', async (c) => {
     ORDER BY date ASC
   `).bind(id).all()
 
-  // 各投稿のエンゲージメント
   const { results: postEngagements } = await c.env.DB.prepare(`
     SELECT p.platform, p.url, e.date, e.likes, e.comments, e.shares
     FROM posts p
@@ -194,7 +133,7 @@ app.get('/api/projects/:id/engagements', async (c) => {
 
 // プロジェクト追加（認証必須）
 app.post('/api/projects', requireAuth, async (c) => {
-  const userId = c.get('userId')
+  const userId = c.get('userId')!
   const { name, description, url, github_url } = await c.req.json()
 
   const result = await c.env.DB.prepare(
@@ -206,7 +145,7 @@ app.post('/api/projects', requireAuth, async (c) => {
   // GitHub URLがあれば即座にstatsを取得
   let githubStats = null
   if (github_url) {
-    const today = new Date().toISOString().split('T')[0]
+    const today = getTodayDate()
     const stats = await fetchGitHubStats(github_url)
     if (stats) {
       await c.env.DB.prepare(`
@@ -220,17 +159,61 @@ app.post('/api/projects', requireAuth, async (c) => {
   return c.json({ id: projectId, name, github_url, github_stats: githubStats }, 201)
 })
 
+// プロジェクト情報更新（認証必須 + 所有者のみ）
+app.patch('/api/projects/:id', requireAuth, async (c) => {
+  const userId = c.get('userId')!
+  const id = c.req.param('id')
+
+  const project = await getOwnedProject(c.env.DB, id, userId)
+  if (!project) {
+    return c.json({ error: 'Forbidden' }, 403)
+  }
+
+  const { name, description, url, github_url } = await c.req.json()
+  const [query, values] = buildUpdateQuery(
+    'projects',
+    { name, description, url, github_url },
+    'id',
+    id
+  )
+
+  if (query) {
+    await c.env.DB.prepare(query).bind(...values).run()
+  }
+
+  return c.json({ success: true })
+})
+
+// プロジェクト公開設定の切り替え（認証必須 + 所有者のみ）
+app.patch('/api/projects/:id/visibility', requireAuth, async (c) => {
+  const userId = c.get('userId')!
+  const id = c.req.param('id')
+
+  const project = await getOwnedProject(c.env.DB, id, userId)
+  if (!project) {
+    return c.json({ error: 'Forbidden' }, 403)
+  }
+
+  const { is_public } = await c.req.json()
+
+  await c.env.DB.prepare(
+    'UPDATE projects SET is_public = ? WHERE id = ?'
+  ).bind(is_public ? 1 : 0, id).run()
+
+  return c.json({ success: true, is_public: !!is_public })
+})
+
+// ========================================
+// Posts
+// ========================================
+
 // 投稿追加（認証必須 + プロジェクト所有者チェック）
 app.post('/api/posts', requireAuth, async (c) => {
-  const userId = c.get('userId')
+  const userId = c.get('userId')!
   const { project_id, platform, url, posted_at } = await c.req.json()
 
-  // プロジェクトの所有者チェック
-  const project = await c.env.DB.prepare(
-    'SELECT owner_id FROM projects WHERE id = ?'
-  ).bind(project_id).first() as any
-
-  if (!project || project.owner_id !== userId) {
+  const project = await getOwnedProject(c.env.DB, project_id, userId)
+  if (!project) {
     return c.json({ error: 'Forbidden' }, 403)
   }
 
@@ -242,8 +225,8 @@ app.post('/api/posts', requireAuth, async (c) => {
 
   const postId = result.meta.last_row_id
 
-  // 即座にエンゲージメント取得を実行
-  const today = new Date().toISOString().split('T')[0]
+  // 即座にエンゲージメント取得
+  const today = getTodayDate()
   const engagement = await fetchEngagement(platform, url)
   if (engagement) {
     await c.env.DB.prepare(`
@@ -257,18 +240,11 @@ app.post('/api/posts', requireAuth, async (c) => {
 
 // 投稿削除（認証必須 + プロジェクト所有者チェック）
 app.delete('/api/posts/:id', requireAuth, async (c) => {
-  const userId = c.get('userId')
+  const userId = c.get('userId')!
   const id = c.req.param('id')
 
-  // 投稿とプロジェクトの所有者チェック
-  const post = await c.env.DB.prepare(`
-    SELECT p.id, proj.owner_id
-    FROM posts p
-    JOIN projects proj ON p.project_id = proj.id
-    WHERE p.id = ?
-  `).bind(id).first() as any
-
-  if (!post || post.owner_id !== userId) {
+  const post = await getOwnedPost(c.env.DB, id, userId)
+  if (!post) {
     return c.json({ error: 'Forbidden' }, 403)
   }
 
@@ -278,75 +254,21 @@ app.delete('/api/posts/:id', requireAuth, async (c) => {
   return c.json({ success: true })
 })
 
-// プロジェクト情報更新（認証必須 + 所有者のみ）
-app.patch('/api/projects/:id', requireAuth, async (c) => {
-  const userId = c.get('userId')
-  const id = c.req.param('id')
-  const { name, description, url, github_url } = await c.req.json()
-
-  // プロジェクトの所有者チェック
-  const project = await c.env.DB.prepare(
-    'SELECT owner_id FROM projects WHERE id = ?'
-  ).bind(id).first() as any
-
-  if (!project || project.owner_id !== userId) {
-    return c.json({ error: 'Forbidden' }, 403)
-  }
-
-  // 更新（指定されたフィールドのみ）
-  const updates: string[] = []
-  const values: any[] = []
-
-  if (name !== undefined) { updates.push('name = ?'); values.push(name) }
-  if (description !== undefined) { updates.push('description = ?'); values.push(description) }
-  if (url !== undefined) { updates.push('url = ?'); values.push(url) }
-  if (github_url !== undefined) { updates.push('github_url = ?'); values.push(github_url) }
-
-  if (updates.length > 0) {
-    values.push(id)
-    await c.env.DB.prepare(
-      `UPDATE projects SET ${updates.join(', ')} WHERE id = ?`
-    ).bind(...values).run()
-  }
-
-  return c.json({ success: true })
-})
-
-// プロジェクト公開設定の切り替え（認証必須）
-app.patch('/api/projects/:id/visibility', requireAuth, async (c) => {
-  const userId = c.get('userId')
-  const id = c.req.param('id')
-  const { is_public } = await c.req.json()
-
-  // プロジェクトの所有者チェック
-  const project = await c.env.DB.prepare(
-    'SELECT owner_id FROM projects WHERE id = ?'
-  ).bind(id).first() as any
-
-  if (!project || project.owner_id !== userId) {
-    return c.json({ error: 'Forbidden' }, 403)
-  }
-
-  await c.env.DB.prepare(
-    'UPDATE projects SET is_public = ? WHERE id = ?'
-  ).bind(is_public ? 1 : 0, id).run()
-
-  return c.json({ success: true, is_public: !!is_public })
-})
-
+// ========================================
 // Cron: エンゲージメント取得（1日1回）
+// ========================================
+
 export default {
   fetch: app.fetch,
   async scheduled(event: ScheduledEvent, env: Bindings, ctx: ExecutionContext) {
     console.log('Cron triggered:', event.cron)
-    const today = new Date().toISOString().split('T')[0]
+    const today = getTodayDate()
 
-    // 全プロジェクトを取得
     const { results: projects } = await env.DB.prepare(
       'SELECT * FROM projects'
-    ).all()
+    ).all() as { results: Project[] }
 
-    for (const project of projects as any[]) {
+    for (const project of projects) {
       // GitHub statsを取得
       if (project.github_url) {
         const stats = await fetchGitHubStats(project.github_url)
@@ -361,9 +283,9 @@ export default {
       // 各投稿のエンゲージメントを取得
       const { results: posts } = await env.DB.prepare(
         'SELECT * FROM posts WHERE project_id = ?'
-      ).bind(project.id).all()
+      ).bind(project.id).all() as { results: Post[] }
 
-      for (const post of posts as any[]) {
+      for (const post of posts) {
         const engagement = await fetchEngagement(post.platform, post.url)
         if (engagement) {
           await env.DB.prepare(`
