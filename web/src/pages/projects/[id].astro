@@ -1,0 +1,20 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import EngagementChart from '../../components/EngagementChart';
+import PostForm from '../../components/PostForm';
+
+const { id } = Astro.params;
+---
+
+<Layout title="Project Detail">
+  <div style="margin-bottom: 2rem;">
+    <a href="/projects" style="color: #94a3b8;">← Back to Projects</a>
+  </div>
+
+  <EngagementChart projectId={id} client:load />
+
+  <div style="margin-top: 2rem; background: #1e293b; padding: 1rem; border-radius: 0.5rem;">
+    <h3 style="margin-bottom: 0.5rem; font-size: 1rem;">Add Post</h3>
+    <PostForm projectId={id} client:load />
+  </div>
+</Layout>

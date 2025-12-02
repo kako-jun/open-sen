@@ -1,0 +1,14 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import ProjectForm from '../../components/ProjectForm';
+---
+
+<Layout title="Add Project">
+  <div style="margin-bottom: 2rem;">
+    <a href="/projects" style="color: #94a3b8;">← Back to Projects</a>
+  </div>
+
+  <h1 style="font-size: 2rem; margin-bottom: 2rem;">Add Project</h1>
+
+  <ProjectForm client:load />
+</Layout>

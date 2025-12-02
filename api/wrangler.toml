@@ -1,0 +1,11 @@
+name = "open-sen-worker"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "open-sen-db"
+database_id = "" # wrangler d1 create で取得後に設定
+
+[triggers]
+crons = ["0 0 * * *"] # 毎日0時（UTC）に実行

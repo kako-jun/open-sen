@@ -1,0 +1,50 @@
+---
+interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+---
+
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>{title} | open-sen</title>
+    <style is:global>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: system-ui, sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+        min-height: 100vh;
+      }
+      a {
+        color: #60a5fa;
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <header style="padding: 1rem 2rem; border-bottom: 1px solid #334155;">
+      <nav style="display: flex; gap: 2rem; align-items: center;">
+        <a href="/" style="font-size: 1.5rem; font-weight: bold; color: #f8fafc;">
+          open-sen
+        </a>
+        <a href="/projects">Projects</a>
+      </nav>
+    </header>
+    <main style="padding: 2rem; max-width: 1200px; margin: 0 auto;">
+      <slot />
+    </main>
+  </body>
+</html>
