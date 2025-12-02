@@ -1,10 +1,13 @@
 -- open-sen D1 Schema
 
 -- プロジェクト（OSSツールなど）
+-- owner_id: Cloudflare Access の subject ID（ハッシュ済み、個人情報ではない）
 CREATE TABLE IF NOT EXISTS projects (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
+  owner_id TEXT NOT NULL,
   name TEXT NOT NULL,
   github_url TEXT,
+  is_public INTEGER DEFAULT 0,  -- 1 = 公開ダッシュボード
   created_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -46,6 +49,7 @@ CREATE TABLE IF NOT EXISTS github_stats (
 );
 
 -- インデックス
+CREATE INDEX IF NOT EXISTS idx_projects_owner ON projects(owner_id);
 CREATE INDEX IF NOT EXISTS idx_posts_project ON posts(project_id);
 CREATE INDEX IF NOT EXISTS idx_engagements_post ON engagements(post_id);
 CREATE INDEX IF NOT EXISTS idx_engagements_date ON engagements(date);
