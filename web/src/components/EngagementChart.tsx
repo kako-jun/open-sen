@@ -217,150 +217,145 @@ export default function EngagementChart({ projectId }: { projectId: string }) {
         </div>
       )}
 
-      {/* Posts */}
-      <div className="card" style={{ padding: 0 }}>
-        <div style={{
-          padding: '10px 12px',
-          borderBottom: '1px solid var(--border-color)',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
+      {/* Posts - Section Header */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '8px',
+      }}>
+        <h2 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
+          スイング記録
+        </h2>
+        <span style={{
+          background: 'var(--btn-bg)',
+          color: 'var(--text-primary)',
+          padding: '0 6px',
+          borderRadius: '10px',
+          fontSize: '11px',
+          fontWeight: 600,
+          backdropFilter: 'blur(8px)',
         }}>
-          <h2 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
-            スイング記録
-          </h2>
-          <span style={{
-            background: 'var(--btn-bg)',
-            color: 'var(--text-primary)',
-            padding: '0 6px',
-            borderRadius: '10px',
-            fontSize: '11px',
-            fontWeight: 600,
-          }}>
-            {project.posts?.length || 0}
-          </span>
-        </div>
-        <div>
-          {project.posts && project.posts.length > 0 ? (
-            project.posts.map((post, index) => {
-              // 該当投稿の最新エンゲージメントを取得
-              const postEngagements = engagements?.posts?.filter(e => e.url === post.url) || [];
-              const latestEngagement = postEngagements[postEngagements.length - 1];
+          {project.posts?.length || 0}
+        </span>
+      </div>
 
-              // グラフ用データを作成
-              const chartData = postEngagements.map(e => ({
-                date: e.date,
-                likes: e.likes,
-                comments: e.comments,
-                shares: e.shares,
-              }));
+      {/* Post Cards */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        {project.posts && project.posts.length > 0 ? (
+          project.posts.map((post) => {
+            // 該当投稿の最新エンゲージメントを取得
+            const postEngagements = engagements?.posts?.filter(e => e.url === post.url) || [];
+            const latestEngagement = postEngagements[postEngagements.length - 1];
 
-              return (
-                <div
-                  key={post.id}
+            // グラフ用データを作成
+            const chartData = postEngagements.map(e => ({
+              date: e.date,
+              likes: e.likes,
+              comments: e.comments,
+              shares: e.shares,
+            }));
+
+            return (
+              <div key={post.id} className="card" style={{ padding: 0 }}>
+                {/* Post header */}
+                <a
+                  href={post.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   style={{
-                    borderBottom: index < project.posts.length - 1 ? '1px solid var(--border-color)' : 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '10px 12px',
+                    textDecoration: 'none',
+                    transition: 'background 0.15s',
                   }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = 'var(--glass-bg)'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                 >
-                  {/* Post header */}
-                  <a
-                    href={post.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      padding: '10px 12px',
-                      textDecoration: 'none',
-                      transition: 'background 0.15s',
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.background = 'var(--glass-bg)'}
-                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                  >
-                    <span style={{
-                      background: getPlatformConfig(post.platform).color,
-                      color: 'white',
-                      width: '22px',
-                      height: '22px',
-                      borderRadius: '4px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0,
-                    }}>
-                      <i className={getPlatformConfig(post.platform).icon} style={{ fontSize: '12px' }}></i>
-                    </span>
-                    <span style={{
-                      color: 'var(--link-color)',
-                      fontSize: '12px',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                      flex: 1,
-                    }}>
-                      {shortenUrl(post.url)}
-                    </span>
-                    {latestEngagement && (
-                      <div style={{ display: 'flex', gap: '10px', flexShrink: 0 }}>
-                        {latestEngagement.likes > 0 && (
-                          <span style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '11px', color: 'var(--text-secondary)' }}>
-                            <i className="fa-solid fa-heart" style={{ color: '#f43f5e', fontSize: '10px' }}></i>
-                            {latestEngagement.likes}
-                          </span>
-                        )}
-                        {latestEngagement.comments > 0 && (
-                          <span style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '11px', color: 'var(--text-secondary)' }}>
-                            <i className="fa-solid fa-comment" style={{ fontSize: '10px' }}></i>
-                            {latestEngagement.comments}
-                          </span>
-                        )}
-                        {latestEngagement.shares > 0 && (
-                          <span style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '11px', color: 'var(--text-secondary)' }}>
-                            <i className="fa-solid fa-share" style={{ fontSize: '10px' }}></i>
-                            {latestEngagement.shares}
-                          </span>
-                        )}
-                      </div>
-                    )}
-                    <span style={{ color: 'var(--text-muted)', fontSize: '10px', flexShrink: 0 }}>
-                      投稿 {post.posted_at.split('T')[0]}
-                    </span>
-                  </a>
-                  {/* Engagement chart - same size as GitHub */}
-                  {chartData.length > 1 && (
-                    <div style={{ padding: '0 12px 12px' }}>
-                      <ResponsiveContainer width="100%" height={140}>
-                        <LineChart data={chartData}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
-                          <XAxis dataKey="date" stroke="var(--text-secondary)" fontSize={10} />
-                          <YAxis stroke="var(--text-secondary)" fontSize={10} />
-                          <Tooltip
-                            contentStyle={{
-                              background: 'var(--bg-card)',
-                              border: '1px solid var(--border-color)',
-                              borderRadius: '6px',
-                              fontSize: '11px',
-                            }}
-                            labelStyle={{ color: 'var(--text-primary)' }}
-                          />
-                          <Line type="monotone" dataKey="likes" stroke="#f43f5e" name="Likes" strokeWidth={2} dot={false} />
-                          <Line type="monotone" dataKey="comments" stroke="#3b82f6" name="Comments" strokeWidth={2} dot={false} />
-                        </LineChart>
-                      </ResponsiveContainer>
+                  <span style={{
+                    background: getPlatformConfig(post.platform).color,
+                    color: 'white',
+                    width: '22px',
+                    height: '22px',
+                    borderRadius: '4px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}>
+                    <i className={getPlatformConfig(post.platform).icon} style={{ fontSize: '12px' }}></i>
+                  </span>
+                  <span style={{
+                    color: 'var(--link-color)',
+                    fontSize: '12px',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    flex: 1,
+                  }}>
+                    {shortenUrl(post.url)}
+                  </span>
+                  {latestEngagement && (
+                    <div style={{ display: 'flex', gap: '10px', flexShrink: 0 }}>
+                      {latestEngagement.likes > 0 && (
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '11px', color: 'var(--text-secondary)' }}>
+                          <i className="fa-solid fa-heart" style={{ color: '#f43f5e', fontSize: '10px' }}></i>
+                          {latestEngagement.likes}
+                        </span>
+                      )}
+                      {latestEngagement.comments > 0 && (
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '11px', color: 'var(--text-secondary)' }}>
+                          <i className="fa-solid fa-comment" style={{ fontSize: '10px' }}></i>
+                          {latestEngagement.comments}
+                        </span>
+                      )}
+                      {latestEngagement.shares > 0 && (
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '11px', color: 'var(--text-secondary)' }}>
+                          <i className="fa-solid fa-share" style={{ fontSize: '10px' }}></i>
+                          {latestEngagement.shares}
+                        </span>
+                      )}
                     </div>
                   )}
-                </div>
-              );
-            })
-          ) : (
-            <div style={{ padding: '20px 12px', textAlign: 'center' }}>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '13px', margin: 0 }}>
-                まだ投稿がありません
-              </p>
-            </div>
-          )}
-        </div>
+                  <span style={{ color: 'var(--text-muted)', fontSize: '10px', flexShrink: 0 }}>
+                    投稿 {post.posted_at.split('T')[0]}
+                  </span>
+                </a>
+                {/* Engagement chart */}
+                {chartData.length > 1 && (
+                  <div style={{ padding: '0 12px 12px' }}>
+                    <ResponsiveContainer width="100%" height={140}>
+                      <LineChart data={chartData}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
+                        <XAxis dataKey="date" stroke="var(--text-secondary)" fontSize={10} />
+                        <YAxis stroke="var(--text-secondary)" fontSize={10} />
+                        <Tooltip
+                          contentStyle={{
+                            background: 'var(--bg-card)',
+                            border: '1px solid var(--border-color)',
+                            borderRadius: '6px',
+                            fontSize: '11px',
+                          }}
+                          labelStyle={{ color: 'var(--text-primary)' }}
+                        />
+                        <Line type="monotone" dataKey="likes" stroke="#f43f5e" name="Likes" strokeWidth={2} dot={false} />
+                        <Line type="monotone" dataKey="comments" stroke="#3b82f6" name="Comments" strokeWidth={2} dot={false} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+              </div>
+            );
+          })
+        ) : (
+          <div className="card" style={{ padding: '20px 12px', textAlign: 'center' }}>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '13px', margin: 0 }}>
+              まだ投稿がありません
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

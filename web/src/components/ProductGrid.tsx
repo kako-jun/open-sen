@@ -293,16 +293,16 @@ export default function ProductGrid({ ownerId, limit, infiniteScroll = false }: 
                 background: 'var(--glass-bg)',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: project.description ? '4px' : 0 }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '5px', marginBottom: project.description ? '4px' : 0 }}>
                 <a
                   href={`/users/${project.owner_id}`}
-                  style={{ fontSize: '10px', color: 'var(--text-muted)', textDecoration: 'none' }}
+                  style={{ fontSize: '13px', color: 'var(--text-secondary)', textDecoration: 'none', lineHeight: 1 }}
                   onClick={(e) => e.stopPropagation()}
                 >
                   {shortenOwnerId(project.owner_id)}
                 </a>
-                <span style={{ color: 'var(--text-muted)', fontSize: '10px' }}>/</span>
-                <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--link-color)', flex: 1 }}>
+                <span style={{ color: 'var(--text-muted)', fontSize: '13px', lineHeight: 1 }}>/</span>
+                <span style={{ fontSize: '15px', fontWeight: 600, color: 'var(--link-color)', flex: 1, lineHeight: 1 }}>
                   {project.name}
                 </span>
                 {project.posts && project.posts.length > 0 && (

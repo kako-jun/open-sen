@@ -109,49 +109,49 @@ const randomMessage = encouragements[Math.floor(Math.random() * encouragements.l
       :root {
         /* Dark theme (Cyberpunk) - default */
         --bg-image: url('/bg-cyber.svg');
-        --bg-overlay: rgba(10, 14, 20, 0.85);
-        --bg-card: rgba(22, 27, 34, 0.75);
-        --bg-header: rgba(22, 27, 34, 0.9);
-        --border-color: rgba(0, 255, 255, 0.2);
-        --border-glow: rgba(0, 255, 255, 0.4);
+        --bg-overlay: rgba(10, 14, 20, 0.6);
+        --bg-card: rgba(22, 27, 34, 0.5);
+        --bg-header: rgba(22, 27, 34, 0.4);
+        --border-color: rgba(0, 255, 255, 0.25);
+        --border-glow: rgba(0, 255, 255, 0.5);
         --text-primary: #e6edf3;
         --text-secondary: #8b949e;
         --text-muted: #6e7681;
-        --link-color: #00d4ff;
+        --link-color: #00ff9f;
         --accent-primary: #00ff9f;
         --accent-secondary: #ff00ff;
-        --btn-bg: rgba(33, 38, 45, 0.7);
-        --btn-bg-hover: rgba(48, 54, 61, 0.8);
-        --btn-primary-bg: #00aa6f;
-        --btn-primary-hover: #00cc88;
-        --banner-bg: linear-gradient(90deg, rgba(0, 170, 111, 0.3) 0%, rgba(0, 212, 255, 0.3) 50%, rgba(0, 170, 111, 0.3) 100%);
-        --banner-border: #00ff9f;
-        --banner-text: #00ff9f;
-        --glass-bg: rgba(255, 255, 255, 0.03);
-        --glass-border: rgba(255, 255, 255, 0.1);
-        --shadow-glow: 0 0 20px rgba(0, 255, 255, 0.15);
+        --btn-bg: rgba(33, 38, 45, 0.5);
+        --btn-bg-hover: rgba(48, 54, 61, 0.6);
+        --btn-primary-bg: rgba(0, 170, 111, 0.8);
+        --btn-primary-hover: rgba(0, 204, 136, 0.9);
+        --banner-bg: rgba(13, 61, 13, 0.8);
+        --banner-border: #1a5c1a;
+        --banner-text: #a8e6a8;
+        --glass-bg: rgba(255, 255, 255, 0.05);
+        --glass-border: rgba(255, 255, 255, 0.15);
+        --shadow-glow: 0 0 25px rgba(0, 255, 255, 0.2);
       }
 
       [data-theme="light"] {
         /* Light theme (Koshien / Summer Baseball) */
         --bg-image: url('/bg-koshien.svg');
-        --bg-overlay: rgba(240, 247, 230, 0.7);
-        --bg-card: rgba(255, 255, 255, 0.85);
-        --bg-header: rgba(255, 255, 255, 0.9);
-        --border-color: rgba(0, 100, 0, 0.15);
-        --border-glow: rgba(0, 100, 0, 0.3);
+        --bg-overlay: rgba(240, 247, 230, 0.4);
+        --bg-card: rgba(255, 255, 255, 0.5);
+        --bg-header: rgba(255, 255, 255, 0.4);
+        --border-color: rgba(0, 100, 0, 0.2);
+        --border-glow: rgba(0, 100, 0, 0.4);
         --text-primary: #1a3d0c;
         --text-secondary: #4a6741;
         --text-muted: #6b8f5e;
-        --link-color: #2563eb;
+        --link-color: #16a34a;
         --accent-primary: #16a34a;
         --accent-secondary: #dc2626;
-        --btn-bg: rgba(255, 255, 255, 0.8);
-        --btn-bg-hover: rgba(255, 255, 255, 0.95);
-        --btn-primary-bg: #16a34a;
-        --btn-primary-hover: #15803d;
-        --banner-bg: linear-gradient(90deg, rgba(34, 197, 94, 0.9) 0%, rgba(22, 163, 74, 0.9) 50%, rgba(34, 197, 94, 0.9) 100%);
-        --banner-border: #16a34a;
+        --btn-bg: rgba(255, 255, 255, 0.5);
+        --btn-bg-hover: rgba(255, 255, 255, 0.7);
+        --btn-primary-bg: rgba(22, 163, 74, 0.8);
+        --btn-primary-hover: rgba(21, 128, 61, 0.9);
+        --banner-bg: rgba(74, 124, 58, 0.6);
+        --banner-border: #5a9a42;
         --banner-text: #ffffff;
         --glass-bg: rgba(255, 255, 255, 0.5);
         --glass-border: rgba(0, 0, 0, 0.1);
@@ -265,6 +265,29 @@ const randomMessage = encouragements[Math.floor(Math.random() * encouragements.l
         box-shadow: var(--shadow-glow);
         text-decoration: none;
       }
+      /* Back to top button */
+      #back-to-top {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        width: 44px;
+        height: 44px;
+        z-index: 1000;
+        display: none;
+        border-radius: 50%;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        color: var(--text-primary);
+        cursor: pointer;
+        backdrop-filter: blur(12px);
+        box-shadow: var(--shadow-glow);
+        transition: all 0.2s;
+      }
+      #back-to-top:hover {
+        background: var(--btn-bg-hover);
+        border-color: var(--border-glow);
+        transform: translateY(-2px);
+      }
       /* Theme toggle button */
       .theme-toggle {
         background: var(--glass-bg);
@@ -278,11 +301,15 @@ const randomMessage = encouragements[Math.floor(Math.random() * encouragements.l
         cursor: pointer;
         transition: all 0.3s;
         backdrop-filter: blur(8px);
+        outline: none;
       }
       .theme-toggle:hover {
         border-color: var(--border-glow);
         box-shadow: var(--shadow-glow);
         transform: rotate(15deg);
+      }
+      .theme-toggle:focus {
+        outline: none;
       }
       .theme-toggle svg {
         width: 20px;
@@ -298,7 +325,7 @@ const randomMessage = encouragements[Math.floor(Math.random() * encouragements.l
   </head>
   <body>
     <!-- Baseball-themed encouragement banner -->
-    <div style="background: var(--banner-bg); padding: 8px 16px; text-align: center; border-bottom: 3px solid var(--banner-border);">
+    <div style="background: var(--banner-bg); padding: 8px 16px; text-align: center; border-bottom: 3px solid var(--banner-border); backdrop-filter: blur(12px);">
       <span style="color: var(--banner-text); font-size: 14px; font-weight: 500;">
         {randomMessage}
       </span>
@@ -341,21 +368,7 @@ const randomMessage = encouragements[Math.floor(Math.random() * encouragements.l
     </main>
 
     <!-- Back to top button -->
-    <button
-      id="back-to-top"
-      class="icon-btn"
-      title="トップへ戻る"
-      style="
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        display: none;
-        width: 44px;
-        height: 44px;
-        z-index: 1000;
-        box-shadow: var(--shadow-glow);
-      "
-    >
+    <button id="back-to-top" title="トップへ戻る">
       <i class="fa-solid fa-chevron-up"></i>
     </button>
 
