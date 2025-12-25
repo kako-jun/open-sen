@@ -27,3 +27,5 @@ npm-debug.log*
 
 # D1 local database
 .mf/
+.serena/
+.mcp.json
