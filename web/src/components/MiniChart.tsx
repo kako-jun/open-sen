@@ -31,8 +31,19 @@ export default function MiniChart({
     })
     .join(' ');
 
+  const filterId = `glow-mini-${Math.round(Math.random() * 10000)}`;
+
   return (
-    <svg width={width} height={height} style={{ display: 'block', flexShrink: 0 }}>
+    <svg width={width} height={height} style={{ display: 'block', flexShrink: 0, overflow: 'visible' }}>
+      <defs>
+        <filter id={filterId} x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="1.5" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+      </defs>
       <polyline
         points={points}
         fill="none"
@@ -40,6 +51,7 @@ export default function MiniChart({
         strokeWidth="1.5"
         strokeLinecap="round"
         strokeLinejoin="round"
+        filter={`url(#${filterId})`}
       />
     </svg>
   );

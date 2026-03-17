@@ -52,9 +52,16 @@ export function getTodayDate(): string {
   return new Date().toISOString().split('T')[0]
 }
 
+// Allowed tables and columns for buildUpdateQuery to prevent SQL injection
+const ALLOWED_TABLES: Record<string, readonly string[]> = {
+  projects: ['name', 'description', 'url', 'github_url', 'is_public'],
+  users: ['bio', 'url', 'updated_at'],
+}
+
 /**
- * Build dynamic UPDATE query from partial data
- * Returns [query, values] for use with bind()
+ * Build dynamic UPDATE query from partial data.
+ * Only whitelisted table names and column names are permitted to prevent SQL injection.
+ * Returns [query, values] for use with bind(), or ['', []] if nothing to update.
  */
 export function buildUpdateQuery(
   table: string,
@@ -62,11 +69,19 @@ export function buildUpdateQuery(
   whereColumn: string,
   whereValue: unknown
 ): [string, unknown[]] {
+  const allowedColumns = ALLOWED_TABLES[table]
+  if (!allowedColumns) {
+    throw new Error(`buildUpdateQuery: table '${table}' is not whitelisted`)
+  }
+
   const updates: string[] = []
   const values: unknown[] = []
 
   for (const [key, value] of Object.entries(data)) {
     if (value !== undefined) {
+      if (!allowedColumns.includes(key)) {
+        throw new Error(`buildUpdateQuery: column '${key}' is not whitelisted for table '${table}'`)
+      }
       updates.push(`${key} = ?`)
       values.push(value)
     }

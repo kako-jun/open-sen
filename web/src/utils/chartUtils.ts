@@ -14,7 +14,7 @@ export function getTrendColor(data: number[]): string {
   const diff = last - first;
   const threshold = Math.max(first * 0.05, 1); // 5% change threshold
 
-  if (diff > threshold) return '#22c55e'; // up - green
-  if (diff < -threshold) return '#3b82f6'; // down - blue
-  return '#8b949e'; // flat - gray
+  if (diff > threshold) return '#b8ff57'; // up - neon yellow-green
+  if (diff < -threshold) return '#ff6b9d'; // down - neon pink
+  return '#5a7a4a'; // flat - muted green
 }

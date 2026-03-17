@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { API_BASE } from '../utils/api';
+import { API_BASE, getAuthToken } from '../utils/api';
 
 interface PostFormProps {
   projectId: string;
@@ -37,9 +37,19 @@ export default function PostForm({ projectId, onSuccess }: PostFormProps) {
     setSuccess(false);
 
     try {
+      const token = getAuthToken();
+      if (!token) {
+        setError('Not authenticated. Please sign in.');
+        setLoading(false);
+        return;
+      }
+
       const res = await fetch(`${API_BASE}/api/posts`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
         credentials: 'include',
         body: JSON.stringify({
           project_id: parseInt(projectId),
@@ -66,11 +76,13 @@ export default function PostForm({ projectId, onSuccess }: PostFormProps) {
 
   const inputStyle: React.CSSProperties = {
     padding: '4px 8px',
-    background: 'var(--bg-primary)',
+    background: 'rgba(8, 12, 22, 0.6)',
     border: '1px solid var(--border-color)',
     borderRadius: '4px',
     color: 'var(--text-primary)',
     fontSize: '13px',
+    backdropFilter: 'blur(8px)',
+    transition: 'border-color 0.2s, box-shadow 0.2s',
   };
 
   return (

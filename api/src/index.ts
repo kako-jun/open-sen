@@ -62,10 +62,15 @@ app.patch('/api/users/:ownerId', requireAuth, async (c) => {
 })
 
 // ユーザー別プロジェクト一覧
+// 本人であれば非公開プロジェクトも含む。他者からは公開プロジェクトのみ
 app.get('/api/users/:ownerId/projects', async (c) => {
   const ownerId = c.req.param('ownerId')
+  const requesterId = c.get('userId')
+  const isSelf = requesterId === ownerId
   const { results } = await c.env.DB.prepare(
-    'SELECT * FROM projects WHERE owner_id = ? ORDER BY created_at DESC'
+    isSelf
+      ? 'SELECT * FROM projects WHERE owner_id = ? ORDER BY created_at DESC'
+      : 'SELECT * FROM projects WHERE owner_id = ? AND is_public = 1 ORDER BY created_at DESC'
   ).bind(ownerId).all()
   return c.json(results)
 })
@@ -75,22 +80,40 @@ app.get('/api/users/:ownerId/projects', async (c) => {
 // ========================================
 
 // 全プロジェクト一覧（新着順）
+// 認証済みの場合は自分のプロジェクトも含めて返す（is_public=0でも自分のものは見える）
 app.get('/api/projects', async (c) => {
-  const { results } = await c.env.DB.prepare(
-    'SELECT * FROM projects ORDER BY created_at DESC'
-  ).all()
+  const userId = c.get('userId')
+  let results: unknown[]
+  if (userId) {
+    const { results: rows } = await c.env.DB.prepare(
+      'SELECT * FROM projects WHERE is_public = 1 OR owner_id = ? ORDER BY created_at DESC'
+    ).bind(userId).all()
+    results = rows
+  } else {
+    const { results: rows } = await c.env.DB.prepare(
+      'SELECT * FROM projects WHERE is_public = 1 ORDER BY created_at DESC'
+    ).all()
+    results = rows
+  }
   return c.json(results)
 })
 
 // プロジェクト詳細
+// is_public=0 のプロジェクトは本人しか見られない
 app.get('/api/projects/:id', async (c) => {
   const id = c.req.param('id')
+  const userId = c.get('userId')
 
   const project = await c.env.DB.prepare(
     'SELECT * FROM projects WHERE id = ?'
   ).bind(id).first() as Project | null
 
   if (!project) {
+    return c.json({ error: 'Not found' }, 404)
+  }
+
+  // 非公開プロジェクトは本人のみアクセス可能
+  if (!project.is_public && project.owner_id !== userId) {
     return c.json({ error: 'Not found' }, 404)
   }
 
@@ -102,14 +125,20 @@ app.get('/api/projects/:id', async (c) => {
 })
 
 // プロジェクトのエンゲージメント履歴
+// is_public=0 のプロジェクトは本人しか取得できない
 app.get('/api/projects/:id/engagements', async (c) => {
   const id = c.req.param('id')
+  const userId = c.get('userId')
 
   const project = await c.env.DB.prepare(
-    'SELECT id FROM projects WHERE id = ?'
-  ).bind(id).first()
+    'SELECT id, is_public, owner_id FROM projects WHERE id = ?'
+  ).bind(id).first() as Pick<Project, 'id' | 'is_public' | 'owner_id'> | null
 
   if (!project) {
+    return c.json({ error: 'Not found' }, 404)
+  }
+
+  if (!project.is_public && project.owner_id !== userId) {
     return c.json({ error: 'Not found' }, 404)
   }
 
@@ -121,7 +150,7 @@ app.get('/api/projects/:id/engagements', async (c) => {
   `).bind(id).all()
 
   const { results: postEngagements } = await c.env.DB.prepare(`
-    SELECT p.platform, p.url, e.date, e.likes, e.comments, e.shares
+    SELECT p.id AS post_id, p.platform, p.url, e.date, e.likes, e.comments, e.shares
     FROM posts p
     JOIN engagements e ON p.id = e.post_id
     WHERE p.project_id = ?

@@ -39,7 +39,7 @@ export default function StatBadge({
 
 // Preset stat badges
 export function LikesBadge({ value }: { value: number }) {
-  return <StatBadge icon="fa-solid fa-heart" value={value} color="#f43f5e" />;
+  return <StatBadge icon="fa-solid fa-heart" value={value} color="#ff6b9d" />;
 }
 
 export function CommentsBadge({ value }: { value: number }) {
@@ -60,7 +60,7 @@ export function StarsBadge({ value, fontSize = 12 }: { value: number; fontSize?:
         fontSize: `${fontSize}px`,
       }}
     >
-      <i className="fa-solid fa-star" style={{ fontSize: `${fontSize}px`, color: '#e3b341' }}></i>
+      <i className="fa-solid fa-star" style={{ fontSize: `${fontSize}px`, color: '#b8ff57' }}></i>
       <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{value}</span>
     </span>
   );

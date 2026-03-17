@@ -153,14 +153,14 @@ export default function ProductGrid({ ownerId, limit, infiniteScroll = false, sh
   }
 
   // 投稿のエンゲージメント履歴からミニグラフ用データを取得
-  const getPostEngagementHistory = (project: Project, postUrl: string) => {
-    const engagements = project.postEngagements?.filter((e: PostEngagement) => e.url === postUrl) || [];
+  const getPostEngagementHistory = (project: Project, postId: number) => {
+    const engagements = project.postEngagements?.filter((e: PostEngagement) => e.post_id === postId) || [];
     return engagements.map((e: PostEngagement) => e.likes + e.comments);
   };
 
   // 投稿の最新エンゲージメントを取得
-  const getLatestEngagement = (project: Project, postUrl: string) => {
-    const engagements = project.postEngagements?.filter((e: PostEngagement) => e.url === postUrl) || [];
+  const getLatestEngagement = (project: Project, postId: number) => {
+    const engagements = project.postEngagements?.filter((e: PostEngagement) => e.post_id === postId) || [];
     return engagements[engagements.length - 1];
   };
 
@@ -208,6 +208,19 @@ export default function ProductGrid({ ownerId, limit, infiniteScroll = false, sh
               overflow: 'hidden',
               display: 'flex',
               flexDirection: 'column',
+              transition: 'border-color 0.2s, box-shadow 0.2s, transform 0.15s',
+            }}
+            onMouseEnter={(e) => {
+              const el = e.currentTarget;
+              el.style.borderColor = 'rgba(184, 255, 87, 0.5)';
+              el.style.boxShadow = '0 0 24px rgba(184, 255, 87, 0.18), 0 4px 12px rgba(0,0,0,0.4)';
+              el.style.transform = 'translateY(-1px)';
+            }}
+            onMouseLeave={(e) => {
+              const el = e.currentTarget;
+              el.style.borderColor = 'var(--border-color)';
+              el.style.boxShadow = 'var(--shadow-glow)';
+              el.style.transform = 'translateY(0)';
             }}
           >
             {/* Product header */}
@@ -284,7 +297,7 @@ export default function ProductGrid({ ownerId, limit, infiniteScroll = false, sh
                   </span>
                 )}
                 {starHistory.length >= 2 && (
-                  <MiniChart data={starHistory} color="#e3b341" />
+                  <MiniChart data={starHistory} color="#b8ff57" />
                 )}
               </a>
             )}
@@ -293,8 +306,8 @@ export default function ProductGrid({ ownerId, limit, infiniteScroll = false, sh
             <div style={{ flex: 1 }}>
               {project.posts && project.posts.length > 0 ? (
                 project.posts.map((post, index) => {
-                  const engagementHistory = getPostEngagementHistory(project, post.url);
-                  const latestEngagement = getLatestEngagement(project, post.url);
+                  const engagementHistory = getPostEngagementHistory(project, post.id);
+                  const latestEngagement = getLatestEngagement(project, post.id);
                   const totalEngagement = latestEngagement ? latestEngagement.likes + latestEngagement.comments : 0;
 
                   return (
@@ -326,12 +339,12 @@ export default function ProductGrid({ ownerId, limit, infiniteScroll = false, sh
                       </span>
                       {totalEngagement > 0 && (
                         <span style={{ display: 'flex', alignItems: 'center', gap: '3px', color: 'var(--text-primary)', flexShrink: 0 }}>
-                          <i className="fa-solid fa-heart" style={{ fontSize: '9px', color: '#f43f5e' }}></i>
+                          <i className="fa-solid fa-heart" style={{ fontSize: '9px', color: '#ff6b9d' }}></i>
                           {totalEngagement}
                         </span>
                       )}
                       {engagementHistory.length >= 2 && (
-                        <MiniChart data={engagementHistory} color="#f43f5e" />
+                        <MiniChart data={engagementHistory} color="#ff6b9d" />
                       )}
                     </a>
                   );

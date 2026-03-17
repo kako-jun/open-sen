@@ -50,14 +50,16 @@ export default function ProjectForm() {
 
   const inputStyle: React.CSSProperties = {
     width: '100%',
-    padding: '4px 10px',
+    padding: '6px 10px',
     fontSize: '14px',
     lineHeight: '20px',
     color: 'var(--text-primary)',
-    background: 'var(--bg-primary)',
+    background: 'rgba(8, 12, 22, 0.6)',
     border: '1px solid var(--border-color)',
     borderRadius: '6px',
     outline: 'none',
+    backdropFilter: 'blur(8px)',
+    transition: 'border-color 0.2s, box-shadow 0.2s',
   };
 
   const labelStyle: React.CSSProperties = {
@@ -96,8 +98,8 @@ export default function ProjectForm() {
             required
             placeholder="e.g., chunkundo.nvim"
             style={inputStyle}
-            onFocus={(e) => e.currentTarget.style.borderColor = 'var(--link-color)'}
-            onBlur={(e) => e.currentTarget.style.borderColor = 'var(--border-color)'}
+            onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--border-glow)'; e.currentTarget.style.boxShadow = '0 0 0 2px rgba(184, 255, 87, 0.1)'; }}
+            onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border-color)'; e.currentTarget.style.boxShadow = 'none'; }}
           />
           <p style={{ color: 'var(--text-secondary)', fontSize: '11px', marginTop: '4px' }}>
             プロモーションするプロジェクトやお店の名前
@@ -112,8 +114,8 @@ export default function ProjectForm() {
             onChange={(e) => setDescription(e.target.value)}
             placeholder="e.g., Neovimの変更履歴をチャンク単位で管理するプラグイン"
             style={inputStyle}
-            onFocus={(e) => e.currentTarget.style.borderColor = 'var(--link-color)'}
-            onBlur={(e) => e.currentTarget.style.borderColor = 'var(--border-color)'}
+            onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--border-glow)'; e.currentTarget.style.boxShadow = '0 0 0 2px rgba(184, 255, 87, 0.1)'; }}
+            onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border-color)'; e.currentTarget.style.boxShadow = 'none'; }}
           />
           <p style={{ color: 'var(--text-secondary)', fontSize: '11px', marginTop: '4px' }}>
             プロジェクトの簡単な説明
@@ -128,8 +130,8 @@ export default function ProjectForm() {
             onChange={(e) => setUrl(e.target.value)}
             placeholder="https://example.com"
             style={inputStyle}
-            onFocus={(e) => e.currentTarget.style.borderColor = 'var(--link-color)'}
-            onBlur={(e) => e.currentTarget.style.borderColor = 'var(--border-color)'}
+            onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--border-glow)'; e.currentTarget.style.boxShadow = '0 0 0 2px rgba(184, 255, 87, 0.1)'; }}
+            onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border-color)'; e.currentTarget.style.boxShadow = 'none'; }}
           />
           <p style={{ color: 'var(--text-secondary)', fontSize: '11px', marginTop: '4px' }}>
             プロジェクトの公式サイトやランディングページのURL
@@ -144,8 +146,8 @@ export default function ProjectForm() {
             onChange={(e) => setGithubUrl(e.target.value)}
             placeholder="https://github.com/username/repo"
             style={inputStyle}
-            onFocus={(e) => e.currentTarget.style.borderColor = 'var(--link-color)'}
-            onBlur={(e) => e.currentTarget.style.borderColor = 'var(--border-color)'}
+            onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--border-glow)'; e.currentTarget.style.boxShadow = '0 0 0 2px rgba(184, 255, 87, 0.1)'; }}
+            onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border-color)'; e.currentTarget.style.boxShadow = 'none'; }}
           />
           <p style={{ color: 'var(--text-secondary)', fontSize: '11px', marginTop: '4px' }}>
             GitHubリポジトリがあれば、Star数などを自動取得します

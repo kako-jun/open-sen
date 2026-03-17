@@ -15,6 +15,7 @@ export interface GithubStat {
 }
 
 export interface PostEngagement {
+  post_id: number;
   platform: string;
   url: string;
   date: string;

@@ -4,6 +4,7 @@ import EngagementChart from '../../components/EngagementChart';
 import PostForm from '../../components/PostForm';
 
 const { id } = Astro.params;
+const apiBase = import.meta.env.PUBLIC_API_URL || 'http://localhost:8787';
 
 // ログイン状態とユーザーIDを取得
 const cfAuth = Astro.cookies.get('CF_Authorization')?.value;
@@ -44,12 +45,15 @@ if (cfAuth) {
     </div>
   </div>
 
-  <script define:vars={{ projectId: id, currentUserId }}>
+  <script define:vars={{ projectId: id, currentUserId, apiBase }}>
     async function initPage() {
       try {
-        const API_BASE = 'http://localhost:8787';
+        const API_BASE = apiBase;
+        const token = document.cookie.match(/CF_Authorization=([^;]+)/)?.[1];
+        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
         const res = await fetch(`${API_BASE}/api/projects/${projectId}`, {
-          credentials: 'include'
+          credentials: 'include',
+          headers,
         });
         const project = await res.json();
 

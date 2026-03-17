@@ -105,57 +105,96 @@ const randomMessage = encouragements[Math.floor(Math.random() * encouragements.l
       })();
     </script>
     <style is:global>
+      /* ===== Google Fonts: Orbitron for cyberpunk headings ===== */
+      @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&display=swap');
+
       /* ===== Theme Variables ===== */
       :root {
         /* Dark theme (Cyberpunk) - default */
         --bg-image: url('/bg-cyber.svg');
-        --bg-overlay: rgba(10, 14, 20, 0.6);
-        --bg-card: rgba(22, 27, 34, 0.5);
-        --bg-header: rgba(22, 27, 34, 0.4);
-        --border-color: rgba(0, 255, 255, 0.25);
-        --border-glow: rgba(0, 255, 255, 0.5);
-        --text-primary: #e6edf3;
-        --text-secondary: #8b949e;
-        --text-muted: #6e7681;
-        --link-color: #00ff9f;
-        --accent-primary: #00ff9f;
-        --accent-secondary: #ff00ff;
-        --btn-bg: rgba(33, 38, 45, 0.5);
-        --btn-bg-hover: rgba(48, 54, 61, 0.6);
-        --btn-primary-bg: rgba(0, 170, 111, 0.8);
-        --btn-primary-hover: rgba(0, 204, 136, 0.9);
-        --banner-bg: rgba(13, 61, 13, 0.8);
-        --banner-border: #1a5c1a;
-        --banner-text: #a8e6a8;
-        --glass-bg: rgba(255, 255, 255, 0.05);
-        --glass-border: rgba(255, 255, 255, 0.15);
-        --shadow-glow: 0 0 25px rgba(0, 255, 255, 0.2);
+        --bg-overlay: rgba(5, 8, 16, 0.55);
+
+        /* Glass panel surfaces */
+        --bg-card: rgba(8, 12, 22, 0.55);
+        --bg-card-hover: rgba(12, 18, 32, 0.65);
+        --bg-header: rgba(5, 8, 18, 0.5);
+        --glass-bg: rgba(184, 255, 87, 0.04);
+        --glass-border: rgba(184, 255, 87, 0.15);
+
+        /* Neon borders */
+        --border-color: rgba(184, 255, 87, 0.2);
+        --border-glow: rgba(184, 255, 87, 0.55);
+        --border-pink: rgba(255, 107, 157, 0.35);
+        --border-pink-glow: rgba(255, 107, 157, 0.7);
+
+        /* Typography */
+        --text-primary: #e8f5d0;
+        --text-secondary: #8db87a;
+        --text-muted: #5a7a4a;
+        --link-color: #b8ff57;
+        --link-pink: #ff6b9d;
+
+        /* Accent colors */
+        --accent-primary: #b8ff57;
+        --accent-bright: #7aff3a;
+        --accent-pink: #ff6b9d;
+        --accent-pink-bright: #ff3d8a;
+        --accent-secondary: #ff3d8a;
+
+        /* Buttons */
+        --btn-bg: rgba(184, 255, 87, 0.06);
+        --btn-bg-hover: rgba(184, 255, 87, 0.12);
+        --btn-primary-bg: rgba(122, 255, 58, 0.25);
+        --btn-primary-hover: rgba(122, 255, 58, 0.38);
+
+        /* Banner */
+        --banner-bg: rgba(20, 40, 10, 0.75);
+        --banner-border: rgba(184, 255, 87, 0.4);
+        --banner-text: #b8ff57;
+
+        /* Shadows & glows */
+        --shadow-glow: 0 0 20px rgba(184, 255, 87, 0.15), 0 2px 8px rgba(0, 0, 0, 0.4);
+        --shadow-glow-strong: 0 0 30px rgba(184, 255, 87, 0.3), 0 0 60px rgba(184, 255, 87, 0.1);
+        --shadow-glow-pink: 0 0 20px rgba(255, 107, 157, 0.2), 0 2px 8px rgba(0, 0, 0, 0.4);
+        --text-glow: 0 0 12px rgba(184, 255, 87, 0.8), 0 0 24px rgba(184, 255, 87, 0.4);
+        --text-glow-pink: 0 0 12px rgba(255, 107, 157, 0.8), 0 0 24px rgba(255, 107, 157, 0.4);
       }
 
       [data-theme="light"] {
         /* Light theme (Koshien / Summer Baseball) */
         --bg-image: url('/bg-koshien.svg');
-        --bg-overlay: rgba(240, 247, 230, 0.4);
-        --bg-card: rgba(255, 255, 255, 0.5);
-        --bg-header: rgba(255, 255, 255, 0.4);
+        --bg-overlay: rgba(230, 245, 210, 0.35);
+        --bg-card: rgba(255, 255, 255, 0.55);
+        --bg-card-hover: rgba(255, 255, 255, 0.7);
+        --bg-header: rgba(255, 255, 255, 0.45);
+        --glass-bg: rgba(255, 255, 255, 0.4);
+        --glass-border: rgba(0, 80, 0, 0.15);
         --border-color: rgba(0, 100, 0, 0.2);
-        --border-glow: rgba(0, 100, 0, 0.4);
+        --border-glow: rgba(22, 163, 74, 0.5);
+        --border-pink: rgba(220, 38, 38, 0.25);
+        --border-pink-glow: rgba(220, 38, 38, 0.5);
         --text-primary: #1a3d0c;
         --text-secondary: #4a6741;
         --text-muted: #6b8f5e;
         --link-color: #16a34a;
+        --link-pink: #dc2626;
         --accent-primary: #16a34a;
+        --accent-bright: #15803d;
+        --accent-pink: #dc2626;
+        --accent-pink-bright: #b91c1c;
         --accent-secondary: #dc2626;
         --btn-bg: rgba(255, 255, 255, 0.5);
-        --btn-bg-hover: rgba(255, 255, 255, 0.7);
-        --btn-primary-bg: rgba(22, 163, 74, 0.8);
+        --btn-bg-hover: rgba(255, 255, 255, 0.72);
+        --btn-primary-bg: rgba(22, 163, 74, 0.75);
         --btn-primary-hover: rgba(21, 128, 61, 0.9);
-        --banner-bg: rgba(74, 124, 58, 0.6);
-        --banner-border: #5a9a42;
+        --banner-bg: rgba(20, 80, 15, 0.55);
+        --banner-border: rgba(22, 163, 74, 0.5);
         --banner-text: #ffffff;
-        --glass-bg: rgba(255, 255, 255, 0.5);
-        --glass-border: rgba(0, 0, 0, 0.1);
-        --shadow-glow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        --shadow-glow: 0 4px 16px rgba(0, 0, 0, 0.12);
+        --shadow-glow-strong: 0 6px 24px rgba(0, 0, 0, 0.18);
+        --shadow-glow-pink: 0 4px 16px rgba(220, 38, 38, 0.12);
+        --text-glow: none;
+        --text-glow-pink: none;
       }
 
       * {
@@ -163,6 +202,7 @@ const randomMessage = encouragements[Math.floor(Math.random() * encouragements.l
         padding: 0;
         box-sizing: border-box;
       }
+
       body {
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
         color: var(--text-primary);
@@ -170,6 +210,7 @@ const randomMessage = encouragements[Math.floor(Math.random() * encouragements.l
         line-height: 1.5;
         overflow-x: hidden;
       }
+
       /* Fixed background image layer */
       body::after {
         content: '';
@@ -184,6 +225,7 @@ const randomMessage = encouragements[Math.floor(Math.random() * encouragements.l
         z-index: -2;
         pointer-events: none;
       }
+
       /* Fixed overlay layer */
       body::before {
         content: '';
@@ -196,6 +238,7 @@ const randomMessage = encouragements[Math.floor(Math.random() * encouragements.l
         z-index: -1;
         pointer-events: none;
       }
+
       a {
         color: var(--link-color);
         text-decoration: none;
@@ -203,7 +246,32 @@ const randomMessage = encouragements[Math.floor(Math.random() * encouragements.l
       a:hover {
         text-decoration: underline;
       }
-      /* Button styling */
+
+      /* ===== Cyberpunk headings ===== */
+      h1, h2, h3 {
+        font-family: 'Orbitron', -apple-system, BlinkMacSystemFont, sans-serif;
+        letter-spacing: 0.04em;
+      }
+
+      [data-theme="dark"] h1 {
+        text-shadow: var(--text-glow);
+      }
+      [data-theme="dark"] h2 {
+        text-shadow: 0 0 8px rgba(184, 255, 87, 0.5);
+      }
+
+      /* ===== Neon link accent ===== */
+      [data-theme="dark"] a.neon-link {
+        color: var(--accent-primary);
+        text-shadow: 0 0 8px rgba(184, 255, 87, 0.6);
+        transition: text-shadow 0.2s;
+      }
+      [data-theme="dark"] a.neon-link:hover {
+        text-shadow: var(--text-glow);
+        text-decoration: none;
+      }
+
+      /* ===== Button styling ===== */
       .btn {
         display: inline-flex;
         align-items: center;
@@ -214,36 +282,61 @@ const randomMessage = encouragements[Math.floor(Math.random() * encouragements.l
         line-height: 20px;
         border-radius: 6px;
         border: 1px solid var(--border-color);
-        background-color: var(--btn-bg);
+        background: var(--btn-bg);
         color: var(--text-primary);
         cursor: pointer;
         transition: all 0.2s;
-        backdrop-filter: blur(8px);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        position: relative;
       }
       .btn:hover {
-        background-color: var(--btn-bg-hover);
+        background: var(--btn-bg-hover);
         border-color: var(--border-glow);
         text-decoration: none;
         box-shadow: var(--shadow-glow);
       }
+      [data-theme="dark"] .btn:hover {
+        box-shadow: var(--shadow-glow), inset 0 0 12px rgba(184, 255, 87, 0.05);
+      }
+
       .btn-primary {
-        background-color: var(--btn-primary-bg);
-        border-color: transparent;
-        color: #ffffff;
+        background: var(--btn-primary-bg);
+        border-color: rgba(122, 255, 58, 0.4);
+        color: var(--accent-bright);
+        font-weight: 600;
+      }
+      [data-theme="dark"] .btn-primary {
+        text-shadow: 0 0 8px rgba(122, 255, 58, 0.6);
       }
       .btn-primary:hover {
-        background-color: var(--btn-primary-hover);
+        background: var(--btn-primary-hover);
+        border-color: var(--border-glow);
+        color: #fff;
       }
-      /* Card styling */
+      [data-theme="dark"] .btn-primary:hover {
+        box-shadow: var(--shadow-glow-strong);
+        text-shadow: var(--text-glow);
+      }
+
+      /* ===== Card / Glass panel styling ===== */
       .card {
         background: var(--bg-card);
         border: 1px solid var(--border-color);
-        border-radius: 6px;
+        border-radius: 8px;
         padding: 16px;
-        backdrop-filter: blur(12px);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
         box-shadow: var(--shadow-glow);
+        transition: border-color 0.2s, box-shadow 0.2s;
       }
-      /* Icon button */
+      [data-theme="dark"] .card {
+        box-shadow: var(--shadow-glow),
+          inset 0 1px 0 rgba(184, 255, 87, 0.06),
+          inset 0 -1px 0 rgba(0, 0, 0, 0.3);
+      }
+
+      /* ===== Icon button ===== */
       .icon-btn {
         display: flex;
         align-items: center;
@@ -256,7 +349,8 @@ const randomMessage = encouragements[Math.floor(Math.random() * encouragements.l
         color: var(--text-primary);
         cursor: pointer;
         transition: all 0.2s;
-        backdrop-filter: blur(8px);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
         text-decoration: none;
       }
       .icon-btn:hover {
@@ -264,8 +358,13 @@ const randomMessage = encouragements[Math.floor(Math.random() * encouragements.l
         border-color: var(--border-glow);
         box-shadow: var(--shadow-glow);
         text-decoration: none;
+        color: var(--accent-primary);
       }
-      /* Back to top button */
+      [data-theme="dark"] .icon-btn:hover {
+        text-shadow: 0 0 8px rgba(184, 255, 87, 0.6);
+      }
+
+      /* ===== Back to top button ===== */
       #back-to-top {
         position: fixed;
         bottom: 20px;
@@ -274,12 +373,15 @@ const randomMessage = encouragements[Math.floor(Math.random() * encouragements.l
         height: 44px;
         z-index: 1000;
         display: none;
+        align-items: center;
+        justify-content: center;
         border-radius: 50%;
         background: var(--bg-card);
         border: 1px solid var(--border-color);
         color: var(--text-primary);
         cursor: pointer;
-        backdrop-filter: blur(12px);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
         box-shadow: var(--shadow-glow);
         transition: all 0.2s;
       }
@@ -287,8 +389,11 @@ const randomMessage = encouragements[Math.floor(Math.random() * encouragements.l
         background: var(--btn-bg-hover);
         border-color: var(--border-glow);
         transform: translateY(-2px);
+        box-shadow: var(--shadow-glow-strong);
+        color: var(--accent-primary);
       }
-      /* Theme toggle button */
+
+      /* ===== Theme toggle button ===== */
       .theme-toggle {
         background: var(--glass-bg);
         border: 1px solid var(--glass-border);
@@ -300,13 +405,19 @@ const randomMessage = encouragements[Math.floor(Math.random() * encouragements.l
         justify-content: center;
         cursor: pointer;
         transition: all 0.3s;
-        backdrop-filter: blur(8px);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
         outline: none;
+        color: var(--text-primary);
       }
       .theme-toggle:hover {
-        border-color: var(--border-glow);
-        box-shadow: var(--shadow-glow);
+        border-color: var(--accent-pink);
+        box-shadow: var(--shadow-glow-pink);
         transform: rotate(15deg);
+        color: var(--accent-pink);
+      }
+      [data-theme="dark"] .theme-toggle:hover {
+        text-shadow: var(--text-glow-pink);
       }
       .theme-toggle:focus {
         outline: none;
@@ -314,31 +425,91 @@ const randomMessage = encouragements[Math.floor(Math.random() * encouragements.l
       .theme-toggle svg {
         width: 20px;
         height: 20px;
-        color: var(--text-primary);
       }
+
       /* Hide icons based on theme */
       [data-theme="dark"] .icon-sun { display: none; }
       [data-theme="dark"] .icon-moon { display: inline; }
       [data-theme="light"] .icon-sun { display: inline; }
       [data-theme="light"] .icon-moon { display: none; }
+
+      /* ===== Scrollbar styling (dark theme) ===== */
+      [data-theme="dark"] ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      [data-theme="dark"] ::-webkit-scrollbar-track {
+        background: rgba(5, 8, 16, 0.5);
+      }
+      [data-theme="dark"] ::-webkit-scrollbar-thumb {
+        background: rgba(184, 255, 87, 0.3);
+        border-radius: 3px;
+      }
+      [data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+        background: rgba(184, 255, 87, 0.5);
+      }
+
+      /* ===== Input / Select styling ===== */
+      input, select, textarea {
+        background: rgba(8, 12, 22, 0.6) !important;
+        border: 1px solid var(--border-color) !important;
+        color: var(--text-primary) !important;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        transition: border-color 0.2s, box-shadow 0.2s;
+        border-radius: 4px;
+      }
+      input:focus, select:focus, textarea:focus {
+        outline: none !important;
+        border-color: var(--border-glow) !important;
+        box-shadow: 0 0 0 2px rgba(184, 255, 87, 0.1) !important;
+      }
+      [data-theme="dark"] input::placeholder {
+        color: var(--text-muted);
+      }
+      [data-theme="light"] input, [data-theme="light"] select {
+        background: rgba(255, 255, 255, 0.7) !important;
+      }
+
+      /* ===== Neon scan-line shimmer (dark only, very subtle) ===== */
+      [data-theme="dark"] body::after {
+        background-image: var(--bg-image),
+          repeating-linear-gradient(
+            0deg,
+            transparent,
+            transparent 2px,
+            rgba(0, 0, 0, 0.03) 2px,
+            rgba(0, 0, 0, 0.03) 4px
+          );
+      }
+
+      /* ===== Recharts tooltip glass ===== */
+      [data-theme="dark"] .recharts-default-tooltip {
+        background: rgba(8, 12, 22, 0.85) !important;
+        border: 1px solid rgba(184, 255, 87, 0.3) !important;
+        backdrop-filter: blur(12px) !important;
+        border-radius: 6px !important;
+      }
     </style>
   </head>
   <body>
-    <!-- Baseball-themed encouragement banner -->
-    <div style="background: var(--banner-bg); padding: 8px 16px; text-align: center; border-bottom: 3px solid var(--banner-border); backdrop-filter: blur(12px);">
-      <span style="color: var(--banner-text); font-size: 14px; font-weight: 500;">
+    <!-- Baseball-themed encouragement banner (cyberpunk neon strip) -->
+    <div class="encouragement-banner">
+      <i class="fa-solid fa-baseball" style="font-size: 12px; opacity: 0.7;"></i>
+      <span class="encouragement-text">
         {randomMessage}
       </span>
+      <i class="fa-solid fa-baseball" style="font-size: 12px; opacity: 0.7;"></i>
     </div>
 
-    <!-- Header -->
-    <header style="background: var(--bg-header); padding: 8px 16px; border-bottom: 1px solid var(--border-color); backdrop-filter: blur(12px);">
-      <nav style="display: flex; gap: 16px; align-items: center; max-width: 1280px; margin: 0 auto;">
-        <a href="/" style="display: flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 600; color: var(--text-primary);">
-          <i class="fa-solid fa-baseball" style="font-size: 20px;"></i>
-          open-sen
+    <!-- Header (glass) -->
+    <header class="site-header">
+      <nav class="site-nav">
+        <a href="/" class="site-logo">
+          <i class="fa-solid fa-baseball" style="font-size: 18px;"></i>
+          <span class="logo-text">open-sen</span>
         </a>
-        <a href="/about" style="font-size: 12px; color: var(--text-muted);">About</a>
+        <a href="/about" class="nav-link">About</a>
         <div style="margin-left: auto; display: flex; gap: 8px; align-items: center;">
           <!-- Theme toggle button -->
           <button class="theme-toggle" id="theme-toggle" title="テーマ切り替え">
@@ -363,9 +534,122 @@ const randomMessage = encouragements[Math.floor(Math.random() * encouragements.l
       </nav>
     </header>
 
-    <main style="padding: 8px;">
+    <main class="site-main">
       <slot />
     </main>
+
+    <style is:global>
+      /* ===== Banner ===== */
+      .encouragement-banner {
+        background: var(--banner-bg);
+        padding: 7px 16px;
+        text-align: center;
+        border-bottom: 1px solid var(--banner-border);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        color: var(--banner-text);
+        font-size: 13px;
+        font-weight: 500;
+        position: relative;
+        overflow: hidden;
+      }
+      [data-theme="dark"] .encouragement-banner {
+        box-shadow: 0 1px 0 rgba(184, 255, 87, 0.1), 0 0 20px rgba(184, 255, 87, 0.05);
+      }
+      [data-theme="dark"] .encouragement-banner::before {
+        content: '';
+        position: absolute;
+        top: 0; left: -100%;
+        width: 60%; height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(184, 255, 87, 0.06), transparent);
+        animation: banner-shimmer 6s ease-in-out infinite;
+      }
+      @keyframes banner-shimmer {
+        0% { left: -100%; }
+        50% { left: 150%; }
+        100% { left: 150%; }
+      }
+      .encouragement-text {
+        color: var(--banner-text);
+      }
+      [data-theme="dark"] .encouragement-text {
+        text-shadow: 0 0 10px rgba(184, 255, 87, 0.5);
+      }
+
+      /* ===== Header ===== */
+      .site-header {
+        background: var(--bg-header);
+        padding: 8px 16px;
+        border-bottom: 1px solid var(--border-color);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      }
+      [data-theme="dark"] .site-header {
+        box-shadow: 0 1px 0 rgba(184, 255, 87, 0.1), 0 4px 20px rgba(0, 0, 0, 0.4);
+      }
+
+      .site-nav {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+        max-width: 1280px;
+        margin: 0 auto;
+      }
+
+      .site-logo {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+        color: var(--text-primary);
+      }
+      [data-theme="dark"] .site-logo {
+        color: var(--accent-primary);
+        filter: drop-shadow(0 0 6px rgba(184, 255, 87, 0.5));
+      }
+      .site-logo:hover {
+        text-decoration: none;
+      }
+      [data-theme="dark"] .site-logo:hover {
+        filter: drop-shadow(0 0 10px rgba(184, 255, 87, 0.8));
+      }
+
+      .logo-text {
+        font-family: 'Orbitron', -apple-system, sans-serif;
+        font-size: 17px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+      }
+      [data-theme="dark"] .logo-text {
+        text-shadow: var(--text-glow);
+      }
+
+      .nav-link {
+        font-size: 12px;
+        color: var(--text-muted);
+        text-decoration: none;
+        transition: color 0.2s;
+      }
+      .nav-link:hover {
+        color: var(--accent-primary);
+        text-decoration: none;
+      }
+
+      /* ===== Main ===== */
+      .site-main {
+        padding: 10px 8px;
+        max-width: 1280px;
+        margin: 0 auto;
+        width: 100%;
+      }
+    </style>
 
     <!-- Back to top button -->
     <button id="back-to-top" title="トップへ戻る">

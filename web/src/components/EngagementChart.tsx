@@ -9,7 +9,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import type { Project, EngagementData } from '../types';
-import { API_BASE } from '../utils/api';
+import { API_BASE, createAuthHeaders } from '../utils/api';
 import { getPlatformConfig } from '../utils/platformConfig';
 import { shortenOwnerId, shortenUrl } from '../utils/stringUtils';
 import PlatformBadge from './PlatformBadge';
@@ -22,9 +22,10 @@ export default function EngagementChart({ projectId }: { projectId: string }) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    const authHeaders = createAuthHeaders();
     Promise.all([
-      fetch(`${API_BASE}/api/projects/${projectId}`, { credentials: 'include' }).then((res) => res.json()),
-      fetch(`${API_BASE}/api/projects/${projectId}/engagements`, { credentials: 'include' }).then((res) => res.json()),
+      fetch(`${API_BASE}/api/projects/${projectId}`, { credentials: 'include', headers: authHeaders }).then((res) => res.json()),
+      fetch(`${API_BASE}/api/projects/${projectId}/engagements`, { credentials: 'include', headers: authHeaders }).then((res) => res.json()),
     ])
       .then(([projectData, engagementData]) => {
         setProject(projectData);
@@ -121,20 +122,24 @@ export default function EngagementChart({ projectId }: { projectId: string }) {
             <div style={{ padding: '12px' }}>
               <ResponsiveContainer width="100%" height={180}>
                 <LineChart data={engagements.github}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
-                  <XAxis dataKey="date" stroke="var(--text-secondary)" fontSize={10} />
-                  <YAxis stroke="var(--text-secondary)" fontSize={10} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(184, 255, 87, 0.1)" />
+                  <XAxis dataKey="date" stroke="var(--text-muted)" fontSize={10} tick={{ fill: 'var(--text-muted)' }} />
+                  <YAxis stroke="var(--text-muted)" fontSize={10} tick={{ fill: 'var(--text-muted)' }} />
                   <Tooltip
                     contentStyle={{
-                      background: 'var(--bg-card)',
-                      border: '1px solid var(--border-color)',
+                      background: 'rgba(8, 12, 22, 0.92)',
+                      border: '1px solid rgba(184, 255, 87, 0.35)',
                       borderRadius: '6px',
                       fontSize: '11px',
+                      backdropFilter: 'blur(12px)',
                     }}
-                    labelStyle={{ color: 'var(--text-primary)' }}
+                    labelStyle={{ color: '#b8ff57' }}
+                    itemStyle={{ color: '#e8f5d0' }}
                   />
-                  <Line type="monotone" dataKey="stars" stroke="#e3b341" name="Stars" strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="forks" stroke="var(--text-secondary)" name="Forks" strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="stars" stroke="#b8ff57" name="Stars" strokeWidth={2.5} dot={false}
+                    style={{ filter: 'drop-shadow(0 0 5px rgba(184, 255, 87, 0.8))' }} />
+                  <Line type="monotone" dataKey="forks" stroke="#ff6b9d" name="Forks" strokeWidth={2} dot={false}
+                    style={{ filter: 'drop-shadow(0 0 5px rgba(255, 107, 157, 0.8))' }} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -175,8 +180,8 @@ export default function EngagementChart({ projectId }: { projectId: string }) {
       }}>
         {project.posts && project.posts.length > 0 ? (
           project.posts.map((post) => {
-            // 該当投稿の最新エンゲージメントを取得
-            const postEngagements = engagements?.posts?.filter(e => e.url === post.url) || [];
+            // 該当投稿の最新エンゲージメントを取得（post_id で照合してURL揺れを回避）
+            const postEngagements = engagements?.posts?.filter(e => e.post_id === post.id) || [];
             const latestEngagement = postEngagements[postEngagements.length - 1];
 
             // グラフ用データを作成
@@ -232,20 +237,24 @@ export default function EngagementChart({ projectId }: { projectId: string }) {
                   <div style={{ padding: '0 12px 12px' }}>
                     <ResponsiveContainer width="100%" height={140}>
                       <LineChart data={chartData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
-                        <XAxis dataKey="date" stroke="var(--text-secondary)" fontSize={10} />
-                        <YAxis stroke="var(--text-secondary)" fontSize={10} />
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(184, 255, 87, 0.08)" />
+                        <XAxis dataKey="date" stroke="var(--text-muted)" fontSize={10} tick={{ fill: 'var(--text-muted)' }} />
+                        <YAxis stroke="var(--text-muted)" fontSize={10} tick={{ fill: 'var(--text-muted)' }} />
                         <Tooltip
                           contentStyle={{
-                            background: 'var(--bg-card)',
-                            border: '1px solid var(--border-color)',
+                            background: 'rgba(8, 12, 22, 0.92)',
+                            border: '1px solid rgba(255, 107, 157, 0.35)',
                             borderRadius: '6px',
                             fontSize: '11px',
+                            backdropFilter: 'blur(12px)',
                           }}
-                          labelStyle={{ color: 'var(--text-primary)' }}
+                          labelStyle={{ color: '#ff6b9d' }}
+                          itemStyle={{ color: '#e8f5d0' }}
                         />
-                        <Line type="monotone" dataKey="likes" stroke="#f43f5e" name="Likes" strokeWidth={2} dot={false} />
-                        <Line type="monotone" dataKey="comments" stroke="#3b82f6" name="Comments" strokeWidth={2} dot={false} />
+                        <Line type="monotone" dataKey="likes" stroke="#ff6b9d" name="Likes" strokeWidth={2.5} dot={false}
+                          style={{ filter: 'drop-shadow(0 0 5px rgba(255, 107, 157, 0.8))' }} />
+                        <Line type="monotone" dataKey="comments" stroke="#b8ff57" name="Comments" strokeWidth={2} dot={false}
+                          style={{ filter: 'drop-shadow(0 0 4px rgba(184, 255, 87, 0.7))' }} />
                       </LineChart>
                     </ResponsiveContainer>
                   </div>
