@@ -47,16 +47,17 @@ app.patch('/api/users/:ownerId', requireAuth, async (c) => {
     return c.json({ error: 'Forbidden' }, 403)
   }
 
-  const { bio, url } = await c.req.json()
+  const { name, bio, url } = await c.req.json()
 
   await c.env.DB.prepare(`
-    INSERT INTO users (id, bio, url, updated_at)
-    VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+    INSERT INTO users (id, name, bio, url, updated_at)
+    VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
     ON CONFLICT(id) DO UPDATE SET
+      name = COALESCE(excluded.name, name),
       bio = COALESCE(excluded.bio, bio),
       url = COALESCE(excluded.url, url),
       updated_at = CURRENT_TIMESTAMP
-  `).bind(ownerId, bio ?? null, url ?? null).run()
+  `).bind(ownerId, name ?? null, bio ?? null, url ?? null).run()
 
   return c.json({ success: true })
 })

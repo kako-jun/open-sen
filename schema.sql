@@ -3,6 +3,7 @@
 -- ユーザー情報（任意で設定可能）
 CREATE TABLE IF NOT EXISTS users (
   id TEXT PRIMARY KEY,  -- owner_id (Cloudflare Access の subject ID ハッシュ)
+  name TEXT,            -- 表示名
   bio TEXT,             -- 自己紹介（一言）
   url TEXT,             -- 公式サイトURL
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
@@ -15,8 +16,8 @@ CREATE TABLE IF NOT EXISTS projects (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   owner_id TEXT NOT NULL,
   name TEXT NOT NULL,
-  description TEXT,     -- 一言紹介
-  url TEXT,             -- 公式サイトURL
+  description TEXT,     -- 一言紹介（ALTERで追加済み）
+  url TEXT,             -- 公式サイトURL（ALTERで追加済み）
   github_url TEXT,
   is_public INTEGER DEFAULT 0,  -- 1 = 公開ダッシュボード
   created_at TEXT DEFAULT CURRENT_TIMESTAMP
