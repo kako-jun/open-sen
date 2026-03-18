@@ -45,6 +45,13 @@ if (cfAuth) {
     </div>
   </div>
 
+  {/* プロジェクト削除ボタン - ログイン中かつ自分のプロジェクトの場合のみ表示 */}
+  <div id="delete-container" style="display: none; margin-top: 24px; text-align: right;">
+    <button id="delete-btn" style="background: #c53030; color: white; border: none; padding: 6px 16px; border-radius: 4px; font-size: 12px; cursor: pointer;">
+      このプロジェクトを削除
+    </button>
+  </div>
+
   <script define:vars={{ projectId: id, currentUserId, apiBase }}>
     async function initPage() {
       try {
@@ -62,9 +69,28 @@ if (cfAuth) {
           document.title = `${project.name} | open-sen`;
         }
 
-        // 自分のプロジェクトなら投稿フォームを表示
+        // 自分のプロジェクトなら投稿フォーム＋削除ボタンを表示
         if (currentUserId && project.owner_id === currentUserId) {
           document.getElementById('post-form-container').style.display = 'block';
+          document.getElementById('delete-container').style.display = 'block';
+
+          document.getElementById('delete-btn').addEventListener('click', async () => {
+            if (!confirm(`「${project.name}」を削除しますか？この操作は取り消せません。`)) return;
+            try {
+              const delRes = await fetch(`${API_BASE}/api/projects/${projectId}`, {
+                method: 'DELETE',
+                credentials: 'include',
+                headers,
+              });
+              if (delRes.ok) {
+                window.location.href = '/';
+              } else {
+                alert('削除に失敗しました');
+              }
+            } catch (e) {
+              alert('削除に失敗しました: ' + e.message);
+            }
+          });
         }
       } catch (e) {
         console.error('Failed to load project:', e);

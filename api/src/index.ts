@@ -233,6 +233,33 @@ app.patch('/api/projects/:id/visibility', requireAuth, async (c) => {
   return c.json({ success: true, is_public: !!is_public })
 })
 
+// プロジェクト削除（認証必須 + 所有者のみ）
+// 関連する posts, engagements, github_stats も削除する
+app.delete('/api/projects/:id', requireAuth, async (c) => {
+  const userId = c.get('userId')!
+  const id = c.req.param('id')
+
+  const project = await getOwnedProject(c.env.DB, id, userId)
+  if (!project) {
+    return c.json({ error: 'Forbidden' }, 403)
+  }
+
+  // 関連データを先に削除（外部キー制約）
+  const { results: posts } = await c.env.DB.prepare(
+    'SELECT id FROM posts WHERE project_id = ?'
+  ).bind(id).all()
+
+  for (const post of posts) {
+    await c.env.DB.prepare('DELETE FROM engagements WHERE post_id = ?').bind(post.id).run()
+  }
+
+  await c.env.DB.prepare('DELETE FROM posts WHERE project_id = ?').bind(id).run()
+  await c.env.DB.prepare('DELETE FROM github_stats WHERE project_id = ?').bind(id).run()
+  await c.env.DB.prepare('DELETE FROM projects WHERE id = ?').bind(id).run()
+
+  return c.json({ success: true })
+})
+
 // ========================================
 // Posts
 // ========================================
