@@ -12,7 +12,6 @@ let currentUserId: string | null = null;
 
 if (cfAuth) {
   try {
-    // JWTからemailを取得してハッシュ化（APIと同じロジック）
     const parts = cfAuth.split('.');
     if (parts.length === 3) {
       const payload = JSON.parse(atob(parts[1]));
@@ -24,9 +23,7 @@ if (cfAuth) {
         currentUserId = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
       }
     }
-  } catch (e) {
-    // JWT解析エラーは無視
-  }
+  } catch (e) {}
 }
 ---
 
@@ -37,19 +34,53 @@ if (cfAuth) {
 
   <EngagementChart projectId={id} client:load />
 
-  {/* 投稿追加フォーム - ログイン中かつ自分のプロジェクトの場合のみ表示 */}
-  <div id="post-form-container" style="display: none; margin-top: 12px;">
-    <div class="card" style="padding: 12px;">
+  {/* オーナー操作パネル（投稿追加・編集・公開切替・削除） */}
+  <div id="owner-panel" style="display: none; margin-top: 12px;">
+    {/* 投稿追加 */}
+    <div class="card" style="padding: 12px; margin-bottom: 8px;">
       <h3 style="margin-bottom: 8px; font-size: 13px; color: var(--text-primary);">投稿を追加</h3>
       <PostForm projectId={id} client:load />
     </div>
-  </div>
 
-  {/* プロジェクト削除ボタン - ログイン中かつ自分のプロジェクトの場合のみ表示 */}
-  <div id="delete-container" style="display: none; margin-top: 24px; text-align: right;">
-    <button id="delete-btn" style="background: #c53030; color: white; border: none; padding: 6px 16px; border-radius: 4px; font-size: 12px; cursor: pointer;">
-      このプロジェクトを削除
-    </button>
+    {/* プロジェクト編集 */}
+    <div class="card" style="padding: 12px; margin-bottom: 8px;">
+      <h3 style="margin-bottom: 8px; font-size: 13px; color: var(--text-primary);">プロジェクト設定</h3>
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <div>
+          <label style="display: block; margin-bottom: 2px; color: var(--text-secondary); font-size: 11px;">プロジェクト名</label>
+          <input id="edit-name" type="text" style="width: 100%; padding: 4px 8px; font-size: 13px;" />
+        </div>
+        <div>
+          <label style="display: block; margin-bottom: 2px; color: var(--text-secondary); font-size: 11px;">一言紹介</label>
+          <input id="edit-description" type="text" style="width: 100%; padding: 4px 8px; font-size: 13px;" />
+        </div>
+        <div>
+          <label style="display: block; margin-bottom: 2px; color: var(--text-secondary); font-size: 11px;">公式サイトURL</label>
+          <input id="edit-url" type="url" style="width: 100%; padding: 4px 8px; font-size: 13px;" />
+        </div>
+        <div>
+          <label style="display: block; margin-bottom: 2px; color: var(--text-secondary); font-size: 11px;">GitHub URL</label>
+          <input id="edit-github" type="url" style="width: 100%; padding: 4px 8px; font-size: 13px;" />
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 4px;">
+          <label style="display: flex; align-items: center; gap: 6px; color: var(--text-secondary); font-size: 12px; cursor: pointer;">
+            <input id="edit-public" type="checkbox" style="width: 16px !important; height: 16px !important;" />
+            公開ダッシュボード
+          </label>
+          <button id="save-btn" class="btn btn-primary" style="padding: 4px 12px; font-size: 12px;">
+            保存
+          </button>
+        </div>
+        <div id="save-msg" style="display: none; font-size: 11px; color: var(--accent-primary);"></div>
+      </div>
+    </div>
+
+    {/* プロジェクト削除 */}
+    <div style="text-align: right;">
+      <button id="delete-btn" style="background: none; color: var(--accent-secondary); border: none; padding: 4px 8px; font-size: 11px; cursor: pointer; opacity: 0.7;">
+        <i class="fa-solid fa-trash" style="margin-right: 4px;"></i>このプロジェクトを削除
+      </button>
+    </div>
   </div>
 
   <script define:vars={{ projectId: id, currentUserId, apiBase }}>
@@ -57,25 +88,67 @@ if (cfAuth) {
       try {
         const API_BASE = apiBase;
         const token = document.cookie.match(/CF_Authorization=([^;]+)/)?.[1];
-        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+        const headers = token ? { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' };
+
         const res = await fetch(`${API_BASE}/api/projects/${projectId}`, {
           credentials: 'include',
           headers,
         });
         const project = await res.json();
 
-        // タイトルを動的に更新
         if (project.name) {
           document.title = `${project.name} | open-sen`;
         }
 
-        // 自分のプロジェクトなら投稿フォーム＋削除ボタンを表示
+        // オーナー操作パネル
         if (currentUserId && project.owner_id === currentUserId) {
-          document.getElementById('post-form-container').style.display = 'block';
-          document.getElementById('delete-container').style.display = 'block';
+          document.getElementById('owner-panel').style.display = 'block';
 
+          // 編集フォームに現在値をセット
+          document.getElementById('edit-name').value = project.name || '';
+          document.getElementById('edit-description').value = project.description || '';
+          document.getElementById('edit-url').value = project.url || '';
+          document.getElementById('edit-github').value = project.github_url || '';
+          document.getElementById('edit-public').checked = !!project.is_public;
+
+          // 保存
+          document.getElementById('save-btn').addEventListener('click', async () => {
+            const saveMsg = document.getElementById('save-msg');
+            try {
+              // プロジェクト情報更新
+              await fetch(`${API_BASE}/api/projects/${projectId}`, {
+                method: 'PATCH',
+                credentials: 'include',
+                headers,
+                body: JSON.stringify({
+                  name: document.getElementById('edit-name').value,
+                  description: document.getElementById('edit-description').value || null,
+                  url: document.getElementById('edit-url').value || null,
+                  github_url: document.getElementById('edit-github').value || null,
+                }),
+              });
+              // 公開設定更新
+              await fetch(`${API_BASE}/api/projects/${projectId}/visibility`, {
+                method: 'PATCH',
+                credentials: 'include',
+                headers,
+                body: JSON.stringify({
+                  is_public: document.getElementById('edit-public').checked,
+                }),
+              });
+              saveMsg.textContent = '保存しました';
+              saveMsg.style.display = 'block';
+              setTimeout(() => { saveMsg.style.display = 'none'; }, 2000);
+            } catch (e) {
+              saveMsg.textContent = '保存に失敗しました';
+              saveMsg.style.color = 'var(--accent-secondary)';
+              saveMsg.style.display = 'block';
+            }
+          });
+
+          // 削除
           document.getElementById('delete-btn').addEventListener('click', async () => {
-            if (!confirm(`「${project.name}」を削除しますか？この操作は取り消せません。`)) return;
+            if (!confirm(`「${project.name}」を削除しますか？関連する投稿とデータも全て削除されます。`)) return;
             try {
               const delRes = await fetch(`${API_BASE}/api/projects/${projectId}`, {
                 method: 'DELETE',
@@ -83,7 +156,7 @@ if (cfAuth) {
                 headers,
               });
               if (delRes.ok) {
-                window.location.href = '/';
+                window.location.href = '/dashboard';
               } else {
                 alert('削除に失敗しました');
               }

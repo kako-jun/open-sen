@@ -31,6 +31,8 @@ export interface Project {
   url?: string | null;
   github_url: string | null;
   owner_id: string;
+  owner_name?: string | null;
+  is_public?: number;
   created_at: string;
   posts?: Post[];
   github?: GithubStat[];

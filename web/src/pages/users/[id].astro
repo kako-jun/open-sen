@@ -5,19 +5,30 @@ import UserBio from '../../components/UserBio';
 
 const { id } = Astro.params;
 const shortId = id?.substring(0, 8) || '';
+
+// Fetch user name server-side for the title
+const apiBase = import.meta.env.PUBLIC_API_URL || 'http://localhost:8787';
+let displayName = shortId;
+try {
+  const res = await fetch(`${apiBase}/api/users/${id}`);
+  if (res.ok) {
+    const user = await res.json();
+    if (user.name) displayName = user.name;
+  }
+} catch {}
 ---
 
-<Layout title={`${shortId}の打席`}>
+<Layout title={`${displayName}の打席`}>
   <div style="margin-bottom: 8px;">
     <a href="/" style="color: var(--text-secondary); font-size: 12px;"><i class="fa-solid fa-arrow-left" style="margin-right: 4px;"></i>戻る</a>
   </div>
 
   <div style="margin-bottom: 12px;">
     <div style="display: flex; align-items: center; gap: 6px; font-size: 18px;">
-      <span style="color: var(--text-primary); font-weight: 600;">{shortId}</span>
+      <span style="color: var(--text-primary); font-weight: 600;">{displayName}</span>
     </div>
     <UserBio client:load userId={id} />
   </div>
 
-  <ProductGrid client:load ownerId={id} showHeader={true} headerTitle={`${shortId} の打席`} />
+  <ProductGrid client:load ownerId={id} showHeader={true} headerTitle={`${displayName} の打席`} />
 </Layout>

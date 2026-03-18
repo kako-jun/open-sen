@@ -70,8 +70,8 @@ app.get('/api/users/:ownerId/projects', async (c) => {
   const isSelf = requesterId === ownerId
   const { results } = await c.env.DB.prepare(
     isSelf
-      ? 'SELECT * FROM projects WHERE owner_id = ? ORDER BY created_at DESC'
-      : 'SELECT * FROM projects WHERE owner_id = ? AND is_public = 1 ORDER BY created_at DESC'
+      ? 'SELECT p.*, u.name AS owner_name FROM projects p LEFT JOIN users u ON p.owner_id = u.id WHERE p.owner_id = ? ORDER BY p.created_at DESC'
+      : 'SELECT p.*, u.name AS owner_name FROM projects p LEFT JOIN users u ON p.owner_id = u.id WHERE p.owner_id = ? AND p.is_public = 1 ORDER BY p.created_at DESC'
   ).bind(ownerId).all()
   return c.json(results)
 })
@@ -87,12 +87,12 @@ app.get('/api/projects', async (c) => {
   let results: unknown[]
   if (userId) {
     const { results: rows } = await c.env.DB.prepare(
-      'SELECT * FROM projects WHERE is_public = 1 OR owner_id = ? ORDER BY created_at DESC'
+      'SELECT p.*, u.name AS owner_name FROM projects p LEFT JOIN users u ON p.owner_id = u.id WHERE p.is_public = 1 OR p.owner_id = ? ORDER BY p.created_at DESC'
     ).bind(userId).all()
     results = rows
   } else {
     const { results: rows } = await c.env.DB.prepare(
-      'SELECT * FROM projects WHERE is_public = 1 ORDER BY created_at DESC'
+      'SELECT p.*, u.name AS owner_name FROM projects p LEFT JOIN users u ON p.owner_id = u.id WHERE p.is_public = 1 ORDER BY p.created_at DESC'
     ).all()
     results = rows
   }
@@ -106,15 +106,15 @@ app.get('/api/projects/:id', async (c) => {
   const userId = c.get('userId')
 
   const project = await c.env.DB.prepare(
-    'SELECT * FROM projects WHERE id = ?'
-  ).bind(id).first() as Project | null
+    'SELECT p.*, u.name AS owner_name FROM projects p LEFT JOIN users u ON p.owner_id = u.id WHERE p.id = ?'
+  ).bind(id).first()
 
   if (!project) {
     return c.json({ error: 'Not found' }, 404)
   }
 
   // 非公開プロジェクトは本人のみアクセス可能
-  if (!project.is_public && project.owner_id !== userId) {
+  if (!(project as any).is_public && (project as any).owner_id !== userId) {
     return c.json({ error: 'Not found' }, 404)
   }
 
@@ -293,6 +293,34 @@ app.post('/api/posts', requireAuth, async (c) => {
   }
 
   return c.json({ id: postId, engagement }, 201)
+})
+
+// 投稿更新（認証必須 + プロジェクト所有者チェック）
+app.patch('/api/posts/:id', requireAuth, async (c) => {
+  const userId = c.get('userId')!
+  const id = c.req.param('id')
+
+  const post = await getOwnedPost(c.env.DB, id, userId)
+  if (!post) {
+    return c.json({ error: 'Forbidden' }, 403)
+  }
+
+  const { platform, url, posted_at } = await c.req.json()
+  const updates: string[] = []
+  const values: unknown[] = []
+
+  if (platform !== undefined) { updates.push('platform = ?'); values.push(platform); }
+  if (url !== undefined) { updates.push('url = ?'); values.push(url); }
+  if (posted_at !== undefined) { updates.push('posted_at = ?'); values.push(posted_at); }
+
+  if (updates.length > 0) {
+    values.push(id)
+    await c.env.DB.prepare(
+      `UPDATE posts SET ${updates.join(', ')} WHERE id = ?`
+    ).bind(...values).run()
+  }
+
+  return c.json({ success: true })
 })
 
 // 投稿削除（認証必須 + プロジェクト所有者チェック）

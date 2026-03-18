@@ -15,11 +15,13 @@ import { shortenOwnerId, shortenUrl } from '../utils/stringUtils';
 import PlatformBadge from './PlatformBadge';
 import { StarsBadge, ForksBadge, LikesBadge, CommentsBadge, SharesBadge } from './StatBadge';
 
-export default function EngagementChart({ projectId }: { projectId: string }) {
+export default function EngagementChart({ projectId }: { projectId: string; }) {
   const [project, setProject] = useState<Project | null>(null);
   const [engagements, setEngagements] = useState<EngagementData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isOwner, setIsOwner] = useState(false);
+  const [ownerName, setOwnerName] = useState<string | null>(null);
 
   useEffect(() => {
     const authHeaders = createAuthHeaders();
@@ -31,6 +33,22 @@ export default function EngagementChart({ projectId }: { projectId: string }) {
         setProject(projectData);
         setEngagements(engagementData);
         setLoading(false);
+        // owner_name is returned by API via JOIN
+        if (projectData.owner_name) setOwnerName(projectData.owner_name);
+        // Check ownership via JWT cookie
+        try {
+          const cookie = document.cookie.match(/CF_Authorization=([^;]+)/)?.[1];
+          if (cookie) {
+            const payload = JSON.parse(atob(cookie.split('.')[1]));
+            if (payload.email) {
+              const enc = new TextEncoder();
+              crypto.subtle.digest('SHA-256', enc.encode(payload.email.toLowerCase())).then(buf => {
+                const hash = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+                setIsOwner(hash === projectData.owner_id);
+              });
+            }
+          }
+        } catch {}
       })
       .catch((err) => {
         setError(err.message);
@@ -61,7 +79,7 @@ export default function EngagementChart({ projectId }: { projectId: string }) {
             href={`/users/${project.owner_id}`}
             style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontWeight: 500 }}
           >
-            {shortenOwnerId(project.owner_id)}
+            {ownerName || shortenOwnerId(project.owner_id)}
           </a>
           <span style={{ color: 'var(--text-muted)' }}>/</span>
           <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>
@@ -192,8 +210,42 @@ export default function EngagementChart({ projectId }: { projectId: string }) {
               shares: e.shares,
             }));
 
+            const handleDeletePost = async (postId: number) => {
+              if (!confirm('この投稿を削除しますか？')) return;
+              const authHeaders = createAuthHeaders();
+              const res = await fetch(`${API_BASE}/api/posts/${postId}`, {
+                method: 'DELETE',
+                credentials: 'include',
+                headers: authHeaders,
+              });
+              if (res.ok) {
+                setProject(prev => prev ? { ...prev, posts: prev.posts?.filter(p => p.id !== postId) } : prev);
+              }
+            };
+
             return (
-              <div key={post.id} className="card" style={{ padding: 0 }}>
+              <div key={post.id} className="card" style={{ padding: 0, position: 'relative' }}>
+                {isOwner && (
+                  <button
+                    onClick={() => handleDeletePost(post.id)}
+                    style={{
+                      position: 'absolute',
+                      top: '8px',
+                      right: '8px',
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--text-muted)',
+                      cursor: 'pointer',
+                      fontSize: '11px',
+                      padding: '2px 4px',
+                      zIndex: 1,
+                      opacity: 0.6,
+                    }}
+                    title="投稿を削除"
+                  >
+                    <i className="fa-solid fa-xmark"></i>
+                  </button>
+                )}
                 {/* Post header */}
                 <a
                   href={post.url}

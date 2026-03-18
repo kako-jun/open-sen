@@ -95,7 +95,7 @@ export default function ProjectList({ isLoggedIn = false, showAll = false, owner
                   onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
                   onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
                 >
-                  {shortenOwnerId(project.owner_id)}
+                  {project.owner_name || shortenOwnerId(project.owner_id)}
                 </a>
               )}
               {showAll && <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>/</span>}

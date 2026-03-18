@@ -4,11 +4,13 @@ import ProjectForm from '../../components/ProjectForm';
 ---
 
 <Layout title="Add Project">
-  <div style="margin-bottom: 2rem;">
-    <a href="/projects" style="color: #94a3b8;">← Back to Projects</a>
+  <div style="margin-bottom: 8px;">
+    <a href="/dashboard" style="color: var(--text-secondary); font-size: 12px;"><i class="fa-solid fa-arrow-left" style="margin-right: 4px;"></i>ダッシュボードに戻る</a>
   </div>
 
-  <h1 style="font-size: 2rem; margin-bottom: 2rem;">Add Project</h1>
+  <h1 style="font-size: 16px; font-weight: 700; color: var(--accent-primary); margin-bottom: 12px; letter-spacing: 0.06em;">
+    <i class="fa-solid fa-plus" style="margin-right: 6px;"></i>新規プロジェクト
+  </h1>
 
   <ProjectForm client:load />
 </Layout>

@@ -161,7 +161,7 @@ export default function ProjectForm() {
           justifyContent: 'flex-end',
           gap: '8px',
         }}>
-          <a href="/projects" className="btn" style={{ textDecoration: 'none' }}>
+          <a href="/dashboard" className="btn" style={{ textDecoration: 'none' }}>
             Cancel
           </a>
           <button

@@ -510,6 +510,7 @@ const randomMessage = encouragements[Math.floor(Math.random() * encouragements.l
           <span class="logo-text">open-sen</span>
         </a>
         <a href="/about" class="nav-link">About</a>
+        {isLoggedIn && <a href="/dashboard" class="nav-link">Dashboard</a>}
         <div style="margin-left: auto; display: flex; gap: 8px; align-items: center;">
           <!-- Theme toggle button -->
           <button class="theme-toggle" id="theme-toggle" title="テーマ切り替え">

@@ -240,7 +240,7 @@ export default function ProductGrid({ ownerId, limit, infiniteScroll = false, sh
                   style={{ fontSize: '13px', color: 'var(--text-secondary)', textDecoration: 'none', lineHeight: 1 }}
                   onClick={(e) => e.stopPropagation()}
                 >
-                  {shortenOwnerId(project.owner_id)}
+                  {project.owner_name || shortenOwnerId(project.owner_id)}
                 </a>
                 <span style={{ color: 'var(--text-muted)', fontSize: '13px', lineHeight: 1 }}>/</span>
                 <span style={{ fontSize: '15px', fontWeight: 600, color: 'var(--link-color)', flex: 1, lineHeight: 1 }}>
