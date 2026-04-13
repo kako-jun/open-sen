@@ -279,3 +279,8 @@ PUBLIC_API_URL=http://localhost:8787
 ```
 
 本番ビルド時は `PUBLIC_API_URL=https://api.open-sen.llll-ll.com npm run build` で指定。
+
+
+## デザインシステム
+
+UIの生成・修正時は `DESIGN.md` に定義されたデザインシステムに従うこと。定義外の色・フォント・スペーシングを勝手に使わない。
